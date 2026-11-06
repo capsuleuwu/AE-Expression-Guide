@@ -322,15 +322,20 @@ function drawTL(){
   tx.strokeStyle='#33373d'; tx.beginPath(); tx.moveTo(0,33.5); tx.lineTo(W,33.5); tx.stroke();
   const rows=tlRows(); let y=34;
   // 屬性列、標記列的文字與上方圖層名稱的中心對齊
-  let layerCX=left/2; const underLayer=w=>Math.max(4,Math.min(left-6-w, layerCX-w/2)); // 刻度區高 34：數字上方與數字到刻度之間各留約 7px
+  // 左側欄所有文字（圖層名稱、屬性、標記）以同一條中心軸置中：先量出最寬的一個
+  const fontOf=r=>(r.type==='layer'?'600 12px':'12px')+' "Noto Sans TC",sans-serif';
+  const labelOf=r=>{ tx.font=fontOf(r); return r.type==='layer'? fit(r.L.name,left-14) : r.type==='prop'? fit((r.P.expr?'= ':'')+r.P.label.replace('填色 › ',''),left-14) : '標記'; };
+  let maxW=0; rows.forEach(r=>{ const s=labelOf(r); maxW=Math.max(maxW,tx.measureText(s).width); });
+  const colCX=Math.max(4+maxW/2, Math.min(8+maxW/2, left-6-maxW/2));
+  const atCenter=s=>colCX-tx.measureText(s).width/2; // 刻度區高 34：數字上方與數字到刻度之間各留約 7px
   rows.forEach((r,ri)=>{
     const cy=y+12;
     tx.textAlign='left'; tx.fillStyle='#dde0e5'; tx.font=(r.type==='layer'?'600 12px':'12px')+' "Noto Sans TC",sans-serif';
-    if(r.type==='layer'){ const nm=fit(r.L.name,left-14); layerCX=8+tx.measureText(nm).width/2; fillMid(tx,nm,8,cy); const c=r.L.props.color.base; tx.fillStyle=rgba(c,0.28); tx.fillRect(X(r.L.inPoint),y+5,X(r.L.outPoint)-X(r.L.inPoint),14); tx.fillStyle=rgba(c,0.9); tx.fillRect(X(r.L.inPoint),y+5,3,14); tx.fillRect(X(r.L.outPoint)-3,y+5,3,14); }
-    else if(r.type==='prop'){ const P=r.P; tx.fillStyle=P.expr?'#f2a640':'#b9bec6'; { const s=fit((P.expr?'= ':'')+P.label.replace('填色 › ',''),left-12); fillMid(tx,s,underLayer(tx.measureText(s).width),cy); }
+    if(r.type==='layer'){ const nm=labelOf(r); fillMid(tx,nm,atCenter(nm),cy); const c=r.L.props.color.base; tx.fillStyle=rgba(c,0.28); tx.fillRect(X(r.L.inPoint),y+5,X(r.L.outPoint)-X(r.L.inPoint),14); tx.fillStyle=rgba(c,0.9); tx.fillRect(X(r.L.inPoint),y+5,3,14); tx.fillRect(X(r.L.outPoint)-3,y+5,3,14); }
+    else if(r.type==='prop'){ const P=r.P; const s=labelOf(r); tx.fillStyle=P.expr?'#f2a640':'#b9bec6'; fillMid(tx,s,atCenter(s),cy);
       if(P.expr){ tx.strokeStyle='rgba(242,166,64,.35)'; tx.setLineDash([3,4]); tx.beginPath(); tx.moveTo(left,cy); tx.lineTo(W-right,cy); tx.stroke(); tx.setLineDash([]); }
       for(const k of P.keys){ const x=X(k.t); tx.save(); tx.translate(x,cy); tx.rotate(Math.PI/4); tx.fillStyle=k.e==='linear'?'#dde0e5':'#a9cdf2'; tx.fillRect(-4.5,-4.5,9,9); tx.restore(); } }
-    else { tx.fillStyle='#b9bec6'; fillMid(tx,'標記',underLayer(tx.measureText('標記').width),cy); for(const m of r.L.markers){ const x=X(m.time); tx.fillStyle='#62c48a'; tx.beginPath(); tx.moveTo(x-6,y+5); tx.lineTo(x+6,y+5); tx.lineTo(x,y+15); tx.closePath(); tx.fill(); tx.fillStyle='#8d939c'; tx.font='11px "JetBrains Mono",monospace'; fillMid(tx,m.comment,x+8,cy); } }
+    else { tx.font=fontOf(r); tx.fillStyle='#b9bec6'; fillMid(tx,'標記',atCenter('標記'),cy); for(const m of r.L.markers){ const x=X(m.time); tx.fillStyle='#62c48a'; tx.beginPath(); tx.moveTo(x-6,y+5); tx.lineTo(x+6,y+5); tx.lineTo(x,y+15); tx.closePath(); tx.fill(); tx.fillStyle='#8d939c'; tx.font='11px "JetBrains Mono",monospace'; fillMid(tx,m.comment,x+8,cy); } }
     y+=24; if(ri<rows.length-1){ tx.strokeStyle='#26292e'; tx.beginPath(); tx.moveTo(0,y+.5); tx.lineTo(W,y+.5); tx.stroke(); } // 最後一列下方不畫分隔線
   });
   const px=X(S.t); tx.strokeStyle='#4ea4f2'; tx.lineWidth=1.5; tx.beginPath(); tx.moveTo(px,4); tx.lineTo(px,H); tx.stroke(); tx.lineWidth=1;
