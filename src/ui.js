@@ -6,6 +6,21 @@ const COMP=AE.COMP;
 const store={ get(k,d){ try{ const v=localStorage.getItem('aeexpr:'+k); return v==null?d:JSON.parse(v); }catch(e){ return d; } },
   set(k,v){ try{ if(v==null) localStorage.removeItem('aeexpr:'+k); else localStorage.setItem('aeexpr:'+k,JSON.stringify(v)); }catch(e){} } };
 
+// ---------- 當機自動復原 ----------
+// 頁面每次啟動先記一筆，正常執行 4 秒後歸零。若連續兩次啟動都沒撐過 4 秒（例如 iOS Safari
+// 讀到有問題的已存資料而反覆當機），第三次啟動時先備份並清除「修改過的表達式」，回到預設頁面。
+// 「我的表達式」收藏不受影響。
+let RECOVERED=false;
+(function(){ try{
+  const n=+(localStorage.getItem('aeexpr:boot')||0);
+  if(n>=2){
+    localStorage.setItem('aeexpr:backup-codes', localStorage.getItem('aeexpr:codes')||'{}');
+    localStorage.removeItem('aeexpr:codes'); localStorage.removeItem('aeexpr:folds');
+    localStorage.setItem('aeexpr:boot','1'); RECOVERED=true;
+  } else localStorage.setItem('aeexpr:boot',String(n+1));
+}catch(e){} })();
+setTimeout(()=>{ try{ localStorage.setItem('aeexpr:boot','0'); }catch(e){} },4000);
+
 const S={ ex:null, saved:null, code:'', prop:'', scene:null, t:0, playing:!matchMedia('(prefers-reduced-motion: reduce)').matches,
   speed:1, trail:true, dirty:true, graphDirty:true, graph:null, paramSig:'', closed:{}, savedList:store.get('saved',[]), labProp:store.get('labProp','position'), codes:store.get('codes',{}) };
 
@@ -548,6 +563,12 @@ if(window.ResizeObserver){ let t=null; new ResizeObserver(()=>{ clearTimeout(t);
 
 setPlaying(S.playing);
 Sync.init();
-load(location.hash.slice(1)||'time-rotate');
+load(RECOVERED ? 'time-rotate' : (location.hash.slice(1)||'time-rotate'));
+if(RECOVERED){
+  const n=document.createElement('div'); n.className='recover'; n.setAttribute('role','status');
+  n.textContent='上次開啟時頁面沒有正常載入，已自動清除先前修改過的表達式並回到預設頁面。「我的表達式」收藏不受影響。';
+  const x=document.createElement('button'); x.type='button'; x.textContent='知道了'; x.onclick=()=>n.remove(); n.append(x);
+  document.querySelector('.app').before(n);
+}
 requestAnimationFrame(frame);
 })();
