@@ -554,31 +554,8 @@ for (i = 0; i < points * 2; i++) {
 createPath(pts, [], [], true)`,
   layer:{ shape:'path', color:C.amber } },
 
-{ id:'path-morph', cat:'path', name:'形狀變化', sig:'r = rA + (rB - rA) * p', prop:'path',
-  desc:'不用關鍵影格，直接用表達式讓形狀從 A（圓形）平滑變成 B（星形），停留一下再變回來。A 和 B 用相同數量的頂點，每個頂點的半徑依進度 p 從 A 過渡到 B。',
-  how:['形狀圖層 › 內容 › 路徑 › 路徑 → 套用','改 rA、rOut、rIn 或頂點的算法，就能做出其他 A → B 組合'],
-  tip:'p 由 ease 產生，頭尾都會放慢。想要等速變形就把 ease 換成 linear。',
-  code:R`points = 5; // @星角數 3~12 1
-rA = 220; // @A 圓形半徑 50~400 1
-rOut = 320; // @B 星形外半徑 100~450 1
-rIn = 130; // @B 星形內半徑 30~300 1
-dur = 0.8; // @變形秒數 0.2~2 0.1
-hold = 1.2; // @停留秒數 0~3 0.1
-t = time % ((dur + hold) * 2);
-if (t < dur + hold) p = ease(t, 0, dur, 0, 1);
-else p = ease(t, dur + hold, dur * 2 + hold, 1, 0);
-n = points * 2;
-pts = [];
-for (i = 0; i < n; i++) {
-  a = i / n * Math.PI * 2 - Math.PI / 2;
-  rB = (i % 2 == 0) ? rOut : rIn;
-  r = rA + (rB - rA) * p;
-  pts.push([Math.cos(a) * r, Math.sin(a) * r]);
-}
-createPath(pts, [], [], true)`,
-  layer:{ shape:'path', color:C.blue } },
-{ id:'path-inertia', cat:'path', name:'慣性回彈', sig:'points(t) · createPath()', prop:'path',
-  desc:'形狀的變化由關鍵影格負責（A → B），表達式只負責回彈：在關鍵影格停下的瞬間，讓每個頂點依照自己的進場速度衝過頭再回彈，形狀會像果凍一樣晃一下再定型。',
+{ id:'path-inertia', cat:'path', name:'形狀變化與慣性回彈', sig:'points(t) · createPath()', prop:'path',
+  desc:'路徑有關鍵影格從形狀 A 變成 B 時，在停下的瞬間讓每個頂點依照自己的進場速度衝過頭再回彈，形狀會像果凍一樣晃一下再定型。',
   how:['在「路徑」上設兩個以上的關鍵影格（A 形狀 → B 形狀），建議用線性','對同一個「路徑」屬性套用表達式','位置、縮放、旋轉請用「關鍵影格與物理 › 慣性回彈」那一版'],
   tip:'路徑不能直接做 value + 速度 的運算，所以這裡用 points() 取出每個頂點，各自算速度與回彈，再用 createPath() 組回去。需要 AE CC 2018 以上。',
   code:R`amp = 0.1; // @回彈幅度 0~0.3 0.005
