@@ -75,11 +75,14 @@ function userLayers(){ return S.scene.userLayers(); }
 function defaultCode(){ return S.saved? S.saved.code : (S.ex.lab ? (S.prop==='position'?S.ex.code:LAB_STARTERS[S.prop]) : S.ex.code); }
 function codeKey(){ return S.ex.id+(S.ex.lab?':'+S.prop:''); }
 
+const persistQ=new Set(); let persistT=null;
+function persistSoon(k){ persistQ.add(k); clearTimeout(persistT); persistT=setTimeout(()=>{ for(const x of persistQ) store.set(x, x==='codes'?S.codes:S.savedList); persistQ.clear(); },400); }
+window.addEventListener('pagehide',()=>{ for(const x of persistQ) store.set(x, x==='codes'?S.codes:S.savedList); });
 function setCode(code,fromEditor){
   S.code=code;
   for(const L of userLayers()) L.props[S.prop].expr=code;
-  if(!S.saved){ if(code===defaultCode()) delete S.codes[codeKey()]; else S.codes[codeKey()]=code; store.set('codes',S.codes); }
-  else { S.saved.code=code; store.set('saved',S.savedList); }
+  if(!S.saved){ if(code===defaultCode()) delete S.codes[codeKey()]; else S.codes[codeKey()]=code; persistSoon('codes'); }
+  else { S.saved.code=code; persistSoon('saved'); }
   Sync.dirty();
   if(!fromEditor){ const ta=$('#code'); const ss=ta.selectionStart, se=ta.selectionEnd; ta.value=code; try{ ta.setSelectionRange(ss,se); }catch(e){} }
   renderHL(); renderParams(false); updateModChip();
@@ -154,7 +157,9 @@ function renderParams(force){
     const apply=(v)=>{ v=+v; if(isNaN(v)) return; const cur=parseParams(S.code)[i]; if(!cur) return;
       const lines=S.code.split('\n'); lines[cur.line]=lines[cur.line].replace(PRE,(all,a,nm,num,rest)=>a+v.toFixed(decimals(p.step)).replace(/^-0$/,'0')+rest);
       setCode(lines.join('\n')); };
-    r.addEventListener('input',()=>{ dragging=row; n.value=r.value; apply(r.value); });
+    let pend=null, raf=0; // 拖動時每個畫面最多更新一次，避免手機一秒處理上百次
+    const applySoon=(v)=>{ pend=v; if(!raf) raf=requestAnimationFrame(()=>{ raf=0; apply(pend); }); };
+    r.addEventListener('input',()=>{ dragging=row; n.value=r.value; applySoon(r.value); });
     r.addEventListener('change',()=>{ dragging=null; });
     n.addEventListener('input',()=>{ if(n.value!=='') { r.value=n.value; apply(n.value); } });
     box.append(row);
@@ -401,12 +406,12 @@ function drawGraph(){
 // ---------- 播放 ----------
 function setPlaying(p){ S.playing=p; $('#playIco').innerHTML=p?'<path d="M3 2h3v10H3zM8 2h3v10H8z"/>':'<path d="M3 1.5v11l9-5.5z"/>'; $('#bPlay').setAttribute('aria-label',p?'暫停':'播放'); }
 function step(n){ setPlaying(false); S.t=((Math.round(S.t*COMP.fps)+n)%(COMP.dur*COMP.fps)+COMP.dur*COMP.fps)%(COMP.dur*COMP.fps)/COMP.fps; S.dirty=true; }
-let lastTs=null, lastTc='';
+let lastTs=null, lastTc='', lastGraph=-1e9;
 function frame(ts){
   if(lastTs==null) lastTs=ts; const dt=Math.min(0.1,(ts-lastTs)/1000); lastTs=ts;
   if(document.hidden){ requestAnimationFrame(frame); return; }
   if(S.playing){ S.t+=dt*S.speed; if(S.t>=COMP.dur) S.t%=COMP.dur; if(compVisible) S.dirty=true; }
-  if(S.graphDirty){ S.graphDirty=false; const h=tlHeight(); if(Math.abs(tl.height/DPR-h)>1) fitCanvas(tl,h); computeGraph(); }
+  if(S.graphDirty && ts-lastGraph>180){ S.graphDirty=false; lastGraph=ts; const h=tlHeight(); if(Math.abs(tl.height/DPR-h)>1) fitCanvas(tl,h); computeGraph(); S.dirty=true; }
   if(S.dirty){ S.dirty=false;
     const tf=Math.floor(S.t*COMP.fps+1e-6); const tcs=tf+'';
     if(tcs!==lastTc){ lastTc=tcs; const f=tf%COMP.fps, s=Math.floor(tf/COMP.fps); $('#tc').innerHTML='0:00:'+String(s).padStart(2,'0')+':'+String(f).padStart(2,'0')+'<small>'+S.t.toFixed(2)+' 秒 · 第 '+tf+' 格</small>'; }
