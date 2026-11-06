@@ -1,0 +1,2136 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AE 表達式圖鑑</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 單一深色主題：仿合成軟體的面板環境。藍色＝選取/互動，琥珀色＝表達式 */
+  --bg:#141518; --panel:#1d1f23; --panel-2:#25282d; --line:#33373d; --ink:#dde0e5; --muted:#8d939c;
+  --accent:#4ea4f2; --expr:#f2a640; --warn:#f2c94c; --bad:#ee6a5c;
+  --display:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:"JetBrains Mono","SFMono-Regular",Consolas,"Noto Sans TC",monospace;
+  --r:8px;
+  color-scheme:dark;
+  /* 版面：左側分類清單 ｜ 中間合成預覽＋時間軸＋圖表 ｜ 右側說明＋編輯器＋參數 */
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code,.mono{font-family:var(--mono)}
+
+/* ---------- 頂部 ---------- */
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.badge{flex:none;width:30px;height:30px;border-radius:7px;background:linear-gradient(145deg,#2b3a52,#1f2836);border:1px solid #3d5677;display:grid;place-items:center;font:600 15px var(--mono);color:var(--expr)}
+.brand b{font:700 16px var(--display);white-space:nowrap}
+.brand small{color:var(--muted);font-size:12px;white-space:nowrap}
+.top .grow{flex:1}
+.search{position:relative;width:min(340px,40vw)}
+.search input{width:100%;height:34px;padding:0 12px 0 32px;border-radius:7px;border:1px solid var(--line);background:var(--bg)}
+.search svg{position:absolute;left:10px;top:9px;width:16px;height:16px;stroke:var(--muted)}
+.iconbtn{flex:none;height:34px;min-width:34px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:var(--panel-2);display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.iconbtn:hover{border-color:#4a4f57}
+#menuBtn{display:none}
+
+/* ---------- 版面 ---------- */
+.app{display:grid;grid-template-columns:268px minmax(0,1fr) 440px;gap:12px;padding:12px;align-items:start}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.ph{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted);min-height:38px;flex-wrap:wrap}
+.ph h3{margin:0;font:600 12.5px var(--body);color:var(--ink);letter-spacing:.02em}
+.ph .sp{flex:1}
+.pb{padding:12px}
+
+/* ---------- 側欄 ---------- */
+#side{position:sticky;top:70px;max-height:calc(100vh - 82px);overflow:auto;padding:0 0 6px}
+.side-search{position:sticky;top:0;z-index:2;background:var(--panel);padding:10px;border-bottom:1px solid var(--line);border-radius:var(--r) var(--r) 0 0}
+.side-search .search{display:block;width:100%}
+.side-search .search svg{top:9px}
+#catList{padding-top:4px}
+.cat{border-bottom:1px solid var(--line)}
+.cat:last-child{border-bottom:0}
+.cat-h{width:100%;display:flex;align-items:center;gap:8px;padding:9px 12px;border:0;background:none;text-align:left}
+.cat-h .nm{font-weight:600}
+.cat-h .cnt{margin-left:auto;font:11px var(--mono);color:var(--muted);background:var(--panel-2);padding:1px 7px;border-radius:10px}
+.cat-h .chev{width:12px;height:12px;stroke:var(--muted);transition:transform .15s}
+.cat.closed .chev{transform:rotate(-90deg)}
+.cat.closed .items{display:none}
+.cat-en{display:block;font:11px var(--mono);color:var(--muted);padding:0 12px 6px 32px;margin-top:-6px}
+.items{padding:0 6px 8px}
+.item{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:6px 10px 6px 26px;border:0;border-radius:6px;background:none;text-align:left;position:relative}
+.item:hover{background:var(--panel-2)}
+.item.on{background:#21364f}
+.item.on::before{content:"";position:absolute;left:10px;top:12px;width:6px;height:6px;border-radius:2px;background:var(--expr);transform:rotate(45deg)}
+.item .t{font-size:13.5px}
+.item .s{font:11px var(--mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.item .del{position:absolute;right:6px;top:6px;border:0;background:none;color:var(--muted);font-size:16px;line-height:1;padding:2px 6px;border-radius:4px}
+.item .del:hover{color:var(--bad);background:var(--bg)}
+.empty-search{padding:16px;color:var(--muted);font-size:13px}
+
+/* ---------- 合成 ---------- */
+.comp-wrap{position:relative;background:#0c0d0f;border-radius:0 0 var(--r) var(--r);overflow:hidden}
+#comp{display:block;width:100%;aspect-ratio:16/9;height:auto}
+.readout{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-top:1px solid var(--line);font:12.5px var(--mono);color:var(--muted)}
+.readout b{color:var(--expr);font-weight:600;word-break:break-all}
+.swatch{width:14px;height:14px;border-radius:3px;border:1px solid #fff3;display:inline-block}
+.err{display:none;margin:0 12px 10px;padding:8px 10px;border-radius:6px;background:#3a2f14;border:1px solid #6d5720;color:#f5dc96;font-size:13px;gap:8px;align-items:flex-start}
+.err.show{display:flex}
+.err svg{flex:none;width:16px;height:16px;margin-top:2px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:1px 8px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.expr{color:var(--expr);border-color:#5b4521;background:#2d2416}
+.chip.mod{color:var(--accent);border-color:#2c4e72;background:#182637}
+.tog{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
+.tog input{accent-color:var(--accent)}
+
+/* ---------- 時間軸 ---------- */
+.transport{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tbtn{width:34px;height:30px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);display:grid;place-items:center}
+.tbtn svg{width:14px;height:14px;fill:var(--ink)}
+.tbtn.play{width:44px;background:#21364f;border-color:#2f5279}
+.tc{font:600 15px var(--mono);color:var(--accent);font-variant-numeric:tabular-nums;margin:0 8px;min-width:104px}
+.tc small{display:block;font:11px var(--mono);color:var(--muted)}
+.transport select{height:30px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);padding:0 6px}
+#tl{display:block;width:100%;touch-action:none;cursor:ew-resize}
+
+/* ---------- 圖表 ---------- */
+#graph{display:block;width:100%;height:170px}
+.legend{display:flex;gap:12px;font:11.5px var(--mono);color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.graph-msg{padding:22px 12px;color:var(--muted);font-size:13px;text-align:center}
+
+/* ---------- 說明 ---------- */
+.doc h2{margin:2px 0 6px;font:700 21px/1.3 var(--display);text-wrap:balance}
+.doc .meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.sig{display:block;font:13px/1.5 var(--mono);background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--expr);padding:8px 10px;border-radius:6px;color:#f6c27a;overflow-x:auto;white-space:pre}
+.doc p{margin:10px 0;max-width:62ch}
+.doc ol{margin:6px 0 0;padding-left:20px}
+.doc li{margin:3px 0}
+.doc .tip{margin-top:10px;padding:8px 10px;background:#182637;border:1px solid #2c4e72;border-radius:6px;font-size:13px}
+.doc details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px}
+.catdesc{color:var(--muted);font-size:12.5px}
+
+/* ---------- 編輯器 ---------- */
+.edbar .btn{height:28px;padding:0 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);font-size:12.5px;display:inline-flex;align-items:center;gap:5px}
+.edbar .btn:hover{border-color:#4a4f57}
+.edbar select{height:28px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);padding:0 6px;font-size:12.5px}
+.code-wrap{position:relative;background:#121316;border-radius:0 0 var(--r) var(--r)}
+.code-wrap pre,.code-wrap textarea{margin:0;padding:12px 14px;font:13px/1.65 var(--mono);white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;tab-size:2;letter-spacing:0}
+.code-wrap pre{pointer-events:none;color:var(--ink);min-height:150px}
+.code-wrap textarea{position:absolute;inset:0;width:100%;height:100%;resize:none;border:0;background:transparent;color:transparent;caret-color:var(--expr);overflow:hidden;outline:none}
+.code-wrap:focus-within{box-shadow:inset 0 0 0 1px #2f5279}
+.tk-c{color:#6f7782;font-style:italic}.tk-p{color:#7fb8ec;font-style:normal}
+.tk-s{color:#9ad18b}.tk-n{color:#f2a640}.tk-k{color:#d48bd9}.tk-f{color:#6cc4d9}.tk-v{color:#f08a7e}
+.ln.bad{background:#4a2420;border-radius:3px}
+.savebar{display:none;gap:8px;padding:10px 12px;border-top:1px solid var(--line);align-items:center;flex-wrap:wrap}
+.savebar.show{display:flex}
+.savebar input{flex:1;min-width:140px;height:30px;border-radius:6px;border:1px solid var(--line);background:var(--bg);padding:0 10px}
+.savebar .btn{height:30px;padding:0 12px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2)}
+.savebar .btn.pri{background:#21364f;border-color:#2f5279}
+
+/* ---------- 參數 ---------- */
+.params{display:flex;flex-direction:column;gap:12px}
+.prow{display:grid;grid-template-columns:96px 1fr 76px;gap:10px;align-items:center}
+.prow label{font-size:13px;line-height:1.3}
+.prow label small{display:block;font:11px var(--mono);color:var(--muted)}
+.prow input[type=range]{width:100%;accent-color:var(--expr)}
+.prow input[type=number]{width:100%;height:28px;border-radius:6px;border:1px solid var(--line);background:var(--bg);padding:0 6px;font:12.5px var(--mono);text-align:right}
+.hint{color:var(--muted);font-size:12.5px;line-height:1.6}
+.hint code{color:#f6c27a;background:var(--bg);padding:1px 5px;border-radius:4px;font-size:12px}
+.fx{border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.fx + .fx{margin-top:10px}
+.fx-h{padding:6px 10px;background:var(--panel-2);font-size:12.5px;display:flex;gap:6px;align-items:center}
+.fx-h .fxb{font:600 10px var(--mono);color:var(--accent);border:1px solid #2c4e72;border-radius:3px;padding:0 4px}
+.fx .pb{display:flex;flex-direction:column;gap:10px}
+.prow input[type=color]{width:100%;height:30px;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:2px}
+.pt{display:flex;gap:6px}
+
+
+/* ---------- 收合 ---------- */
+.fold{flex:none;width:26px;height:26px;margin-left:auto;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);display:grid;place-items:center;padding:0}
+.fold svg{width:12px;height:12px;stroke:var(--muted);transition:transform .15s}
+.panel.folded .fold svg{transform:rotate(-90deg)}
+.panel.folded .fold-body{display:none!important}
+.panel.folded > .ph{border-bottom-color:transparent}
+.ph h3.foldable{cursor:pointer;user-select:none}
+.p-doc .ph{min-height:34px}
+/* ---------- 桌機：頂列固定，三欄各自捲動，預覽永遠可見 ---------- */
+@media (min-width:821px){
+  html,body{height:100%;overflow:hidden}
+  body{display:flex;flex-direction:column}
+  .top{position:relative;flex:none}
+  .app{flex:1;min-height:0;grid-template-rows:minmax(0,1fr);align-items:stretch;padding-bottom:0}
+  .app>.col{overflow-y:auto;min-height:0;padding-bottom:12px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#3a3e45 transparent}
+  .app>.col::-webkit-scrollbar{width:8px}.app>.col::-webkit-scrollbar-thumb{background:#3a3e45;border-radius:4px}
+}
+@media (min-width:1101px){
+  #side{position:static;max-height:none;min-height:0;margin-bottom:12px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#3a3e45 transparent}
+}
+/* ---------- 響應式 ---------- */
+@media (max-width:1280px){ .app{grid-template-columns:240px minmax(0,1fr) 400px} }
+@media (max-width:1100px){
+  #menuBtn{display:inline-flex}
+  .app{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  #side{position:fixed;left:0;top:var(--top-h,55px);bottom:0;margin:0;overscroll-behavior:contain;width:300px;max-height:none;z-index:40;border-radius:0;transform:translateX(-102%);transition:transform .2s;box-shadow:12px 0 30px #0008}
+  body.drawer #side{transform:none}
+  .scrim{display:none;position:fixed;left:0;right:0;bottom:0;top:var(--top-h,55px);background:#0007;z-index:35;touch-action:none}
+  body.drawer .scrim{display:block}
+}
+@media (max-width:820px){
+  .top{position:fixed;left:0;right:0;top:0}
+  body{padding-top:var(--top-h,55px)}
+  body.locked{position:fixed;left:0;right:0;overflow:hidden}
+  .app{display:flex;flex-direction:column;align-items:stretch;padding:10px;gap:10px}
+  .col{display:contents}
+  .p-doc{order:1}.p-comp{order:2}.p-tl{order:3}.p-params{order:4}.p-fx{order:5}.p-code{order:6}.p-graph{order:7}.p-how{order:8}
+  .brand small{display:none}
+  .doc h2{font-size:19px}
+  .prow{grid-template-columns:80px 1fr 66px}
+  .tc{min-width:92px;margin:0 4px}
+}
+
+.code-wrap pre#hl{position:relative;z-index:1}
+.code-wrap pre.sel{position:absolute;inset:0;z-index:0;color:transparent;min-height:0}
+.code-wrap pre.sel mark{background:#2f5f94;color:transparent;border-radius:2px;box-shadow:0 0 0 1px #4e85c2}
+.code-wrap textarea{z-index:2}
+.code-wrap textarea::selection{background:transparent;color:transparent}
+.syncwrap{position:relative}
+#syncBtn{font-size:13px}
+#syncBtn .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+#syncBtn.ok .dot{background:#62c48a}#syncBtn.busy .dot{background:var(--expr)}#syncBtn.off .dot{background:var(--bad)}
+.syncpop{position:absolute;right:0;top:42px;width:min(330px,calc(100vw - 32px));z-index:50;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:0 12px 30px #0009;font-size:13px}
+.syncpop b{font-size:14px}
+.syncpop p{margin:6px 0 8px;color:var(--ink)}
+.syncpop ul{margin:0 0 12px;padding-left:18px}
+.syncpop .btn{height:30px;padding:0 12px;border-radius:6px;border:1px solid #2f5279;background:#21364f}
+@media (max-width:820px){ #syncTxt{display:none} }
+@media (prefers-reduced-motion:reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="iconbtn" id="menuBtn" aria-label="開啟分類清單"><svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.6" fill="none"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+  <div class="brand"><b>AE 表達式圖鑑</b></div>
+  <span class="grow"></span>
+  <div class="syncwrap"><button class="iconbtn" id="syncBtn" aria-expanded="false" aria-controls="syncPop"><span class="dot" id="syncDot"></span><span id="syncTxt">帳號同步</span></button>
+    <div class="syncpop" id="syncPop" hidden>
+      <b id="syncTitle">帳號同步</b>
+      <p id="syncDesc"></p>
+      <ul class="hint"><li>同步內容：「我的表達式」收藏、各範例修改過的程式碼、實驗室屬性設定。</li><li>在另一台電腦或手機登入同一個 Claude 帳號、打開這個頁面，資料會自動出現。</li><li>修改後約 1 秒自動上傳，其他裝置開著時會即時更新。</li></ul>
+      <button class="btn" id="syncNow" type="button">立即同步</button>
+    </div></div>
+</header>
+<div class="scrim" id="scrim"></div>
+<div class="app">
+  <nav class="panel" id="side" aria-label="表達式分類">
+    <div class="side-search"><label class="search" for="search"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg><input id="search" type="search" placeholder="搜尋表達式…" autocomplete="off"></label></div>
+    <div id="catList"></div>
+  </nav>
+
+  <div class="col">
+    <section class="panel p-comp">
+      <div class="ph"><h3>合成預覽</h3><span class="chip mono">1920×1080 · 30 fps</span><span class="sp"></span>
+        <label class="tog" for="trailTog"><input type="checkbox" id="trailTog" checked>運動軌跡</label></div>
+      <div class="comp-wrap"><canvas id="comp" aria-label="表達式效果預覽"></canvas></div>
+      <div class="readout" id="readout"></div>
+      <div class="err" id="err" role="status"><svg viewBox="0 0 16 16"><path d="M8 1.5l7 12.5H1z" fill="#f2c94c"/><path d="M8 6v4M8 11.6v.4" stroke="#3a2f14" stroke-width="1.6" stroke-linecap="round"/></svg><div id="errText"></div></div>
+    </section>
+    <section class="panel p-tl">
+      <div class="transport">
+        <button class="tbtn" id="bStart" aria-label="回到開頭"><svg viewBox="0 0 14 14"><path d="M2 2h2v10H2zM12 2v10L5 7z"/></svg></button>
+        <button class="tbtn" id="bPrev" aria-label="上一格"><svg viewBox="0 0 14 14"><path d="M10 2v10L3 7z"/></svg></button>
+        <button class="tbtn play" id="bPlay" aria-label="播放或暫停"><svg viewBox="0 0 14 14" id="playIco"><path d="M3 2h3v10H3zM8 2h3v10H8z"/></svg></button>
+        <button class="tbtn" id="bNext" aria-label="下一格"><svg viewBox="0 0 14 14"><path d="M4 2v10l7-5z"/></svg></button>
+        <div class="tc" id="tc">0:00:00:00<small>0.00 秒</small></div>
+        <span style="flex:1"></span>
+        <label class="tog" for="speed">速度
+        <select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
+      </div>
+      <canvas id="tl" aria-label="時間軸，可拖曳改變時間"></canvas>
+    </section>
+    <section class="panel p-graph" data-fold="graph">
+      <div class="ph"><h3>數值圖表</h3><span class="catdesc">整段時間的輸出值</span><span class="sp"></span><span class="legend" id="legend"></span></div>
+      <div id="graphBox" class="fold-body"><canvas id="graph"></canvas></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="panel p-doc" data-fold="doc"><div class="ph"><h3>範例說明</h3><span class="sp"></span></div><div class="pb doc" id="doc"></div></section>
+    <section class="panel p-params" data-fold="params">
+      <div class="ph"><h3>參數調整</h3><span class="catdesc">拖動滑桿會直接改寫表達式中的數字</span></div>
+      <div class="pb fold-body"><div class="params" id="params"></div></div>
+    </section>
+    <section class="panel p-fx" id="fxPanel" data-fold="fx" hidden>
+      <div class="ph"><h3>效果控制</h3><span class="catdesc">表達式用 effect("名稱")("參數") 讀取</span></div>
+      <div class="pb fold-body" id="fx"></div>
+    </section>
+    <section class="panel p-code" data-fold="code">
+      <div class="ph edbar"><h3>表達式</h3><span id="propChip"></span><span id="modChip"></span><span class="sp"></span>
+        <select id="labProp" aria-label="套用屬性" hidden></select>
+        <button class="btn" id="bCopy">複製</button><button class="btn" id="bReset">重設</button><button class="btn" id="bSave">收藏</button></div>
+      <div class="code-wrap fold-body"><pre id="sel" class="sel" aria-hidden="true"></pre><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="表達式編輯器"></textarea></div>
+      <div class="savebar fold-body" id="savebar"><input id="saveName" aria-label="收藏名稱" placeholder="名稱"><button class="btn pri" id="bSaveOk">儲存到「我的表達式」</button><button class="btn" id="bSaveNo">取消</button></div>
+    </section>
+    <section class="panel p-how" data-fold="how" data-fold-default="closed">
+      <div class="ph"><h3>在 After Effects 中套用</h3></div>
+      <div class="pb doc fold-body">
+        <ol>
+          <li>選取圖層，按 <code>P</code>（位置）、<code>S</code>（縮放）、<code>R</code>（旋轉）、<code>T</code>（不透明度）展開屬性。</li>
+          <li>按住 <code>Alt</code>（Mac 為 <code>Option</code>）點擊屬性旁的碼錶，時間軸會出現表達式欄位。</li>
+          <li>按上方「複製」，貼到表達式欄位，點擊空白處套用。</li>
+          <li>屬性數值變成紅色代表已啟用表達式；出現黃色警告列代表有錯誤，訊息會指出行號。</li>
+        </ol>
+        <p class="catdesc">此頁以瀏覽器模擬 AE 的 JavaScript 表達式引擎，結果與 AE 相近，但隨機數與雜訊的實際數值會不同。</p>
+      </div>
+    </section>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/acorn@8.11.3/dist/acorn.js"></script>
+<script>
+// ================= AE 表達式引擎 =================
+// 以 acorn 解析，再以樹走訪直譯，模擬 After Effects 的表達式語意：
+// 陣列 + - * / 運算、最後一行即結果、未宣告變數自動成為區域變數。
+var AE = (function(){
+"use strict";
+const COMP = { w:1920, h:1080, fps:30, dur:6 };
+const isArr = Array.isArray;
+const FD = () => 1/COMP.fps;
+
+// ---------- 向量運算 ----------
+function at(a,i){ return isArr(a) ? (a[i]===undefined?0:+a[i]) : +a; }
+function vlen(a){ return isArr(a)?a.length:1; }
+function vmap2(a,b,f){ const n=Math.max(vlen(a),vlen(b)); const r=new Array(n); for(let i=0;i<n;i++) r[i]=f(at(a,i),at(b,i)); return r; }
+function arith(o,x,y){ switch(o){case '+':return x+y;case '-':return x-y;case '*':return x*y;case '/':return x/y;case '%':return x%y;} }
+function op(o,a,b){
+  const A=isArr(a), B=isArr(b);
+  if(!A && !B) return arith(o,a,b);
+  if(o==='+' && (typeof a==='string'||typeof b==='string')) return a+b;
+  if(A && B) return vmap2(a,b,(x,y)=>arith(o,x,y));
+  if(A){ const s=+b; return a.map(x=>arith(o,+x,s)); }
+  const s=+a; return b.map(y=>arith(o,s,+y));
+}
+function neg(a){ return isArr(a)? a.map(x=>-x) : -a; }
+function clone(v){ return isArr(v)? v.slice() : v; }
+function lerpV(a,b,f){
+  if(typeof a==='string'||typeof b==='string') return f<1?a:b;
+  if(isArr(a)||isArr(b)) return vmap2(a,b,(x,y)=>x+(y-x)*f);
+  return +a + (+b - +a)*f;
+}
+
+// ---------- 雜湊 / 雜訊 / 亂數 ----------
+function hashInts(){ let h=0x811c9dc5; for(let i=0;i<arguments.length;i++){ let k=(arguments[i]|0); h=Math.imul(h^k,0x01000193); h^=h>>>13; h=Math.imul(h,0x5bd1e995); h^=h>>>15; } return h>>>0; }
+function h01(i,s){ return hashInts(i,s,0x9e37)/4294967295; }
+function vnoise(x,s){ // Catmull-Rom 平滑的數值雜訊，範圍約 -1..1
+  const i=Math.floor(x), f=x-i;
+  const p0=h01(i-1,s)*2-1, p1=h01(i,s)*2-1, p2=h01(i+1,s)*2-1, p3=h01(i+2,s)*2-1;
+  const f2=f*f, f3=f2*f;
+  return 0.5*((2*p1)+(-p0+p2)*f+(2*p0-5*p1+4*p2-p3)*f2+(-p0+3*p1-3*p2+p3)*f3);
+}
+function fbm(x,s,oct,mult){ let sum=0, a=1, fr=1; oct=Math.max(1,Math.floor(oct)); for(let k=0;k<oct;k++){ sum+=a*vnoise(x*fr,s+k*101); a*=mult; fr*=2; } return sum; }
+function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+// ---------- 緩動 ----------
+function bez(x1,y1,x2,y2){ return function(x){ let s=x; for(let i=0;i<10;i++){ const cx=3*x1*s*(1-s)*(1-s)+3*x2*s*s*(1-s)+s*s*s-x; const dx=3*x1*(1-s)*(1-s)+6*(x2-x1)*s*(1-s)+3*(1-x2)*s*s; if(Math.abs(dx)<1e-6) break; s-=cx/dx; s=Math.min(1,Math.max(0,s)); } return 3*y1*s*(1-s)*(1-s)+3*y2*s*s*(1-s)+s*s*s; }; }
+const EASE = { linear:f=>f, ease:bez(.333,0,.667,1), in:f=>f*f, out:f=>1-(1-f)*(1-f), hold:()=>0 };
+
+// ---------- 屬性與圖層 ----------
+let UID=1;
+const PROP_INFO = {
+  position:{dims:2,label:'位置'}, scale:{dims:2,label:'縮放'}, rotation:{dims:1,label:'旋轉'},
+  opacity:{dims:1,label:'不透明度'}, anchorPoint:{dims:2,label:'錨點'}, color:{dims:4,label:'填色 › 顏色'},
+  sourceText:{dims:'text',label:'來源文字'}, path:{dims:'path',label:'路徑'}, amount:{dims:'amount',label:'表達式選取器 › 數量'}
+};
+class Prop {
+  constructor(layer,name,base,keys,expr){
+    this.layer=layer; this.name=name; this.dims=PROP_INFO[name].dims; this.label=PROP_INFO[name].label;
+    this.base=base; this.keys=(keys||[]).map((k,i)=>({t:k[0], v:k[1], e:k[2]||'ease'}));
+    this.expr=expr||null; this.uid=UID++; this.err=null;
+  }
+  pre(t){
+    const K=this.keys; if(!K.length) return clone(this.base);
+    if(t<=K[0].t) return clone(K[0].v);
+    const L=K[K.length-1]; if(t>=L.t) return clone(L.v);
+    for(let i=0;i<K.length-1;i++){ const a=K[i], b=K[i+1];
+      if(t>=a.t && t<b.t){ if(a.e==='hold'||typeof a.v==='string') return clone(a.v);
+        if(this.dims==='path') return lerpPath(a.v,b.v,EASE[a.e]((t-a.t)/(b.t-a.t)));
+        return lerpV(a.v,b.v,EASE[a.e]((t-a.t)/(b.t-a.t))); } }
+    return clone(L.v);
+  }
+}
+
+function lerpPath(A,B,f){ if(!A||!B||A.points.length!==B.points.length) return f<1?A:B;
+  const L=(p,q)=>(p||[]).map((x,i)=>[x[0]+((q[i]||[0,0])[0]-x[0])*f, x[1]+((q[i]||[0,0])[1]-x[1])*f]);
+  return {__path:true, points:L(A.points,B.points), inTangents:L(A.inTangents,B.inTangents), outTangents:L(A.outTangents,B.outTangents), closed:A.closed}; }
+function defaultPath(){ return {__path:true, points:[[-120,-120],[120,-120],[120,120],[-120,120]], inTangents:[], outTangents:[], closed:true}; }
+
+class Layer {
+  constructor(spec, index){
+    this.spec=spec; this.name=spec.name; this.index=index; this.shape=spec.shape||'rect';
+    this.size=spec.size||160; this.inPoint=spec.inPoint||0; this.outPoint=spec.outPoint==null?COMP.dur:spec.outPoint;
+    this.fontSize=spec.fontSize||96; this.user=!!spec.user; this.label=spec.label||null; this.stroke=spec.stroke||null;
+    const b=spec.base||{}, k=spec.keys||{}, e=spec.expr||{};
+    const dflt = { position:[COMP.w/2,COMP.h/2], scale:[100,100], rotation:0, opacity:100, anchorPoint:[0,0],
+      color:(spec.color||[0.24,0.61,0.94]).concat([1]).slice(0,4), sourceText:spec.text||'', path:defaultPath(), amount:[100,100] };
+    this.animScale=spec.animScale==null?0:spec.animScale;
+    this.props={};
+    for(const name in PROP_INFO){ this.props[name]=new Prop(this,name, b[name]!==undefined?b[name]:dflt[name], k[name], e[name]); }
+    this.markers=(spec.markers||[]).map((m,i)=>({time:m[0], comment:m[1]||'', index:i+1, duration:0}));
+    this.effects=spec.effects||[];
+    this.api=null;
+  }
+}
+
+class Scene {
+  constructor(layerSpecs){ this.layers=layerSpecs.map((s,i)=>new Layer(s,i+1)); this.markers=[]; this.api=null; }
+  userLayers(){ return this.layers.filter(l=>l.user); }
+}
+
+// ---------- 執行環境 ----------
+const STACK=[];
+let SCENE=null;
+function cur(){ return STACK[STACK.length-1]; }
+function aeErr(msg){ const e=new Error(msg); e.ae=true; return e; }
+
+function makeFrame(prop,t){
+  const L=prop.layer; const frame=Math.floor(t*COMP.fps+1e-6);
+  return { layer:L, prop, t, frame, seedBase:hashInts(L.index,prop.uid), rng:mulberry(hashInts(L.index,prop.uid,frame)), store:null };
+}
+
+function evalProp(prop,t,extra){
+  if(!prop.expr) return prop.pre(t);
+  const c=compile(prop.expr);
+  if(c.error){ prop.err=c.error; return prop.pre(t); }
+  if(STACK.length>24){ throw aeErr('表達式引用層數過深，可能有循環引用'); }
+  const fr=makeFrame(prop,t); if(extra){ Object.assign(fr,extra); fr.rng=mulberry(hashInts(prop.layer.index,prop.uid,fr.frame,extra.textIndex||0)); } STACK.push(fr);
+  try{
+    const store=Object.create(STATIC); fr.store=store;
+    store.time=t; store.value=prop.pre(t);
+    const r=runProgram(c.ast, store);
+    const v=coerce(prop,r); prop.err=null; return v;
+  }catch(e){ prop.err=fmtErr(e); return prop.pre(t); }
+  finally{ STACK.pop(); }
+}
+
+function unwrap(v){
+  if(v instanceof Number) return +v;
+  if(v instanceof String) return ''+v;
+  if(isArr(v)) return v.map(x=> (x instanceof Number)? +x : x);
+  return v;
+}
+function coerce(prop,r){
+  r=unwrap(r); const d=prop.dims;
+  if(r===undefined) throw aeErr('表達式結果未定義：最後一行必須產生一個值');
+  if(d==='text'){ if(isArr(r)) return r.join(','); if(r!==null && typeof r==='object') return String(r); return String(r); }
+  if(d==='path'){ if(r && r.__path) return r; throw aeErr('路徑屬性需要 createPath() 的結果'); }
+  if(d==='amount'){ if(isArr(r)){ if(!r.length) throw aeErr('數量需要數值或 [x, y]'); const a=+r[0], b=r.length>1?+r[1]:+r[0]; if(isNaN(a)||isNaN(b)) throw aeErr('結果不是數字 (NaN)'); return [a,b]; } r=+r; if(isNaN(r)) throw aeErr('結果不是數字 (NaN)'); return [r,r]; }
+  if(d===1){
+    if(isArr(r)) throw aeErr(prop.label+' 需要單一數值，但結果是 '+r.length+' 維陣列');
+    r=+r; if(typeof r!=='number'||isNaN(r)) throw aeErr('結果不是數字 (NaN)'); return r;
+  }
+  if(!isArr(r)) throw aeErr(prop.label+' 需要 '+d+' 維陣列，例如 '+(d===4?'[R, G, B, A]':'[x, y]')+'，但結果是單一數值');
+  if(r.length<d) throw aeErr(prop.label+' 需要 '+d+' 個數值，但只有 '+r.length+' 個'+(d===4?'（顏色要包含 Alpha）':''));
+  const out=r.slice(0,d).map(Number); if(out.some(isNaN)) throw aeErr('陣列中有非數字 (NaN)'); return out;
+}
+
+function fmtErr(e){
+  let m = e && e.message ? e.message : String(e);
+  if(!e || !e.ae){
+    m = m.replace(/^(\w+) is not defined$/,'$1 未定義')
+         .replace(/is not a function/,'不是函式')
+         .replace(/Cannot read properties of (undefined|null) \(reading '(.+)'\)/,'無法讀取 $1 的屬性 "$2"');
+  }
+  const line = e && e.aeLine ? e.aeLine : null;
+  return { msg:m, line };
+}
+
+// ---------- 屬性值包裝 ----------
+function defHidden(o,k,v){ Object.defineProperty(o,k,{value:v,enumerable:false,configurable:true,writable:true}); }
+function defGetter(o,k,g){ Object.defineProperty(o,k,{get:g,enumerable:false,configurable:true}); }
+function postOrPre(prop,t){ const c=cur(); return (c && c.prop===prop)? prop.pre(t) : evalProp(prop,t); }
+function velAt(fn,t){ const h=0.0005; const a=fn(t-h), b=fn(t+h); return isArr(a)? vmap2(b,a,(x,y)=>(x-y)/(2*h)) : (b-a)/(2*h); }
+function keyObj(prop,i){ const K=prop.keys; if(i<1||i>K.length) throw aeErr('關鍵影格索引 '+i+' 超出範圍（共 '+K.length+' 個）'); const k=K[i-1]; return {time:k.t, value:clone(k.v), index:i}; }
+function nearestKeyObj(prop,t){ const K=prop.keys; if(!K.length) throw aeErr('此屬性沒有關鍵影格'); let bi=0, bd=Infinity; K.forEach((k,i)=>{ const d=Math.abs(k.t-t); if(d<bd){bd=d;bi=i;} }); return keyObj(prop,bi+1); }
+function attachPropMethods(o,prop){
+  const vat=(tt)=>postOrPre(prop,+tt);
+  defHidden(o,'valueAtTime',vat);
+  defHidden(o,'velocityAtTime',(tt)=>velAt(vat,+tt));
+  defGetter(o,'velocity',()=>velAt(vat,cur().t));
+  defGetter(o,'speed',()=>{ const v=velAt(vat,cur().t); return isArr(v)?Math.hypot.apply(null,v):Math.abs(v); });
+  defGetter(o,'value',()=>postOrPre(prop,cur().t));
+  defGetter(o,'numKeys',()=>prop.keys.length);
+  defHidden(o,'key',(i)=>keyObj(prop,i));
+  defHidden(o,'nearestKey',(tt)=>nearestKeyObj(prop,+tt));
+  defHidden(o,'name',prop.label);
+  return o;
+}
+function clonePath(p){ return {__path:true, points:p.points.map(x=>x.slice()), inTangents:(p.inTangents||[]).map(x=>x.slice()), outTangents:(p.outTangents||[]).map(x=>x.slice()), closed:p.closed}; }
+function attachPathMethods(o,prop){
+  const at_=(tt)=>{ tt = tt===undefined? cur().t : +tt; const v=postOrPre(prop,tt); return v; };
+  defHidden(o,'points',(tt)=>at_(tt).points.map(x=>x.slice()));
+  defHidden(o,'inTangents',(tt)=>{ const v=at_(tt); return v.points.map((_,i)=>(v.inTangents[i]||[0,0]).slice()); });
+  defHidden(o,'outTangents',(tt)=>{ const v=at_(tt); return v.points.map((_,i)=>(v.outTangents[i]||[0,0]).slice()); });
+  defHidden(o,'isClosed',()=>!!at_().closed);
+  defHidden(o,'createPath',STATIC.createPath);
+  return o;
+}
+function propValue(prop){
+  const c=cur(); const v=postOrPre(prop,c.t);
+  if(prop.dims==='text') return v;
+  if(prop.dims==='path'){ const o=clonePath(v); attachPropMethods(o,prop); return attachPathMethods(o,prop); }
+  const o = isArr(v)? v.slice() : new Number(v);
+  return attachPropMethods(o,prop);
+}
+
+// ---------- 圖層 / 合成 API ----------
+function markerAPI(list){
+  return {
+    get numKeys(){ return list.length; },
+    key(i){ if(typeof i==='string'){ const m=list.find(x=>x.comment===i); if(!m) throw aeErr('找不到標記 "'+i+'"'); return Object.assign({},m); }
+      if(i<1||i>list.length) throw aeErr('標記索引 '+i+' 超出範圍（共 '+list.length+' 個）'); return Object.assign({},list[i-1]); },
+    nearestKey(t){ if(!list.length) throw aeErr('沒有任何標記'); let b=list[0]; for(const m of list) if(Math.abs(m.time-t)<Math.abs(b.time-t)) b=m; return Object.assign({},b); }
+  };
+}
+function findByName(list,n,aliasKey){ return list.find(x=>x.name===n || (x.alias && x.alias===n)); }
+function effectFn(L,n){
+  let fx = typeof n==='number' ? L.effects[n-1] : findByName(L.effects,n);
+  if(!fx) throw aeErr('找不到效果 "'+n+'"，請確認效果名稱與「效果控制」面板一致');
+  const f=function(p){
+    let par = typeof p==='number' ? fx.params[p-1] : findByName(fx.params,p);
+    if(!par) throw aeErr('效果 "'+fx.name+'" 沒有參數 "'+p+'"');
+    return clone(par.v);
+  };
+  f.name_=fx.name; return f;
+}
+function rot2(p,deg){ const r=deg*Math.PI/180, c=Math.cos(r), s=Math.sin(r); return [p[0]*c-p[1]*s, p[0]*s+p[1]*c]; }
+function layerAPI(L){
+  if(L.api) return L.api;
+  const api={ name:L.name, index:L.index, inPoint:L.inPoint, outPoint:L.outPoint, marker:markerAPI(L.markers),
+    effect:(n)=>effectFn(L,n),
+    toComp(p){ const P=propValue(L.props.position), A=L.props.anchorPoint.pre(cur().t), S=postOrPre(L.props.scale,cur().t), R=postOrPre(L.props.rotation,cur().t);
+      const q=rot2([(at(p,0)-A[0])*S[0]/100,(at(p,1)-A[1])*S[1]/100],R); return [q[0]+P[0],q[1]+P[1]]; },
+    fromComp(p){ const P=propValue(L.props.position), A=L.props.anchorPoint.pre(cur().t), S=postOrPre(L.props.scale,cur().t), R=postOrPre(L.props.rotation,cur().t);
+      const q=rot2([at(p,0)-P[0],at(p,1)-P[1]],-R); return [q[0]*100/S[0]+A[0], q[1]*100/S[1]+A[1]]; }
+  };
+  const tf={};
+  for(const k of ['position','scale','rotation','opacity','anchorPoint']){
+    defGetter(tf,k,()=>propValue(L.props[k])); defGetter(api,k,()=>propValue(L.props[k]));
+  }
+  api.transform=tf;
+  api.text={}; defGetter(api.text,'sourceText',()=>propValue(L.props.sourceText));
+  api.content=function(n){ const g={}; defGetter(g,'color',()=>propValue(L.props.color)); g.content=()=>g; defGetter(g,'path',()=>propValue(L.props.path)); return g; };
+  L.api=api; return api;
+}
+function compAPI(){
+  const S=SCENE;
+  if(S.api) return S.api;
+  S.api={ name:'合成 1', width:COMP.w, height:COMP.h, duration:COMP.dur, frameDuration:1/COMP.fps,
+    get numLayers(){ return S.layers.length; },
+    layer(x){ let L = typeof x==='number' ? S.layers[x-1] : S.layers.find(l=>l.name===x);
+      if(!L) throw aeErr('找不到圖層 '+(typeof x==='number'? '#'+x : '"'+x+'"')); return layerAPI(L); },
+    marker:markerAPI(S.markers) };
+  return S.api;
+}
+
+// ---------- 色彩 ----------
+function hslToRgb(c){ let h=at(c,0)%1, s=at(c,1), l=at(c,2), a=isArr(c)&&c.length>3?+c[3]:1; if(h<0)h+=1;
+  if(s===0) return [l,l,l,a];
+  const q=l<.5?l*(1+s):l+s-l*s, p=2*l-q;
+  const f=t=>{ if(t<0)t+=1; if(t>1)t-=1; if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p; };
+  return [f(h+1/3),f(h),f(h-1/3),a]; }
+function rgbToHsl(c){ const r=at(c,0),g=at(c,1),b=at(c,2),a=isArr(c)&&c.length>3?+c[3]:1; const mx=Math.max(r,g,b), mn=Math.min(r,g,b); let h=0,s=0; const l=(mx+mn)/2;
+  if(mx!==mn){ const d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn); h= mx===r?(g-b)/d+(g<b?6:0) : mx===g?(b-r)/d+2 : (r-g)/d+4; h/=6; } return [h,s,l,a]; }
+function hexToRgb(hex){ hex=String(hex).replace('#','').replace(/^0x/i,''); if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+  const n=parseInt(hex.slice(0,6),16); if(isNaN(n)) throw aeErr('hexToRgb 需要像 "#FF5A36" 的色碼'); return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255,1]; }
+
+// ---------- 插值 ----------
+function interp(fn){ return function(t,a,b,c,d){
+  t=+t; let tMin,tMax,v1,v2;
+  if(c===undefined){ tMin=0;tMax=1;v1=a;v2=b; } else { tMin=+a;tMax=+b;v1=c;v2=d; }
+  if(v1===undefined||v2===undefined) throw aeErr('插值函式參數不足：linear(t, tMin, tMax, value1, value2)');
+  if(tMin>tMax){ [tMin,tMax]=[tMax,tMin]; [v1,v2]=[v2,v1]; }
+  let f = tMax===tMin ? (t>=tMax?1:0) : (t-tMin)/(tMax-tMin);
+  f=Math.min(1,Math.max(0,f));
+  return lerpV(unwrap(v1),unwrap(v2),fn(f)); }; }
+
+// ---------- loopOut / loopIn ----------
+function loopImpl(dir,type,n){
+  const c=cur(), P=c.prop, K=P.keys, t=c.t; type=type||'cycle'; n=+n||0;
+  if(K.length<2) return P.pre(t);
+  let tA,tB;
+  if(dir==='out'){ tB=K[K.length-1].t; if(t<=tB) return P.pre(t); tA=K[n>0?Math.max(0,K.length-1-n):0].t; }
+  else { tA=K[0].t; if(t>=tA) return P.pre(t); tB=K[n>0?Math.min(K.length-1,n):K.length-1].t; }
+  const dur=tB-tA; if(dur<=0) return P.pre(t);
+  const mod=(x,m)=>((x%m)+m)%m;
+  if(type==='cycle') return P.pre(tA+mod(t-tA,dur));
+  if(type==='pingpong'){ const k=Math.floor((dir==='out'?t-tB:tA-t)/dur); const loc=mod(dir==='out'?t-tB:tA-t,dur);
+    if(dir==='out') return P.pre(k%2===0? tB-loc : tA+loc); return P.pre(k%2===0? tA+loc : tB-loc); }
+  if(type==='offset'){ const cyc=Math.floor((t-tA)/dur); const delta=op('-',P.pre(tB),P.pre(tA)); return op('+',P.pre(tA+mod(t-tA,dur)),op('*',delta,cyc)); }
+  if(type==='continue'){ if(dir==='out'){ const v=velAt(x=>P.pre(x),tB-0.001); return op('+',P.pre(tB),op('*',v,t-tB)); }
+    const v=velAt(x=>P.pre(x),tA+0.001); return op('+',P.pre(tA),op('*',v,t-tA)); }
+  throw aeErr('loop 類型必須是 "cycle"、"pingpong"、"offset" 或 "continue"');
+}
+
+// ---------- 內建函式（STATIC） ----------
+function rndArgs(gen,a,b){
+  if(a===undefined) return gen();
+  a=unwrap(a); b=unwrap(b);
+  if(b===undefined) return isArr(a)? a.map(v=>gen()*v) : gen()*a;
+  if(isArr(a)||isArr(b)){ const n=Math.max(vlen(a),vlen(b)); return Array.from({length:n},(_,i)=>{ const lo=at(a,i),hi=at(b,i); return lo+gen()*(hi-lo); }); }
+  return +a + gen()*(b-a);
+}
+function gauss(){ const r=cur().rng; let u=0,v=0; while(u===0)u=r(); v=r(); const n=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); return 0.5+n*0.304; }
+function pad2(n){ return (n<10?'0':'')+n; }
+
+const STATIC = Object.assign(Object.create(null), {
+  __op:op, __neg:neg,
+  wiggle(freq,amp,oct,mult,t){
+    const c=cur(); oct=oct===undefined?1:oct; mult=mult===undefined?0.5:mult; t=t===undefined?c.store.time:+t;
+    const v=unwrap(c.prop.pre(t)); const x=t*(+freq);
+    if(isArr(v)) return v.map((val,d)=>val+fbm(x,c.seedBase+d*7919,oct,mult)*amp);
+    return v+fbm(x,c.seedBase,oct,mult)*amp;
+  },
+  random(a,b){ return rndArgs(()=>cur().rng(),a,b); },
+  gaussRandom(a,b){ return rndArgs(gauss,a,b); },
+  seedRandom(seed,timeless){ const c=cur(); const s=Math.floor((+seed)*1000);
+    c.seedBase=hashInts(s,c.layer.index,c.prop.uid,7); c.rng=mulberry(hashInts(s,timeless?0:c.frame+1,c.layer.index,c.prop.uid)); },
+  noise(v){ v=unwrap(v); if(isArr(v)){ let x=0; v.forEach((q,i)=>x+=q*(1+i*0.618)); return vnoise(x,977)*0.9; } return vnoise(+v,977)*0.9; },
+  linear:interp(EASE.linear), ease:interp(f=>0.5-0.5*Math.cos(Math.PI*f)),
+  easeIn:interp(f=>1-Math.cos(f*Math.PI/2)), easeOut:interp(f=>Math.sin(f*Math.PI/2)),
+  clamp(v,a,b){ v=unwrap(v); if(isArr(v)||isArr(a)||isArr(b)) return vmap2(vmap2(v,a,Math.max),b,Math.min); return Math.min(Math.max(+v,+a),+b); },
+  length(a,b){ a=unwrap(a); if(b!==undefined) a=op('-',a,unwrap(b)); return isArr(a)? Math.hypot.apply(null,a.map(Number)) : Math.abs(a); },
+  normalize(v){ v=unwrap(v); const l=isArr(v)?Math.hypot.apply(null,v):Math.abs(v); return l===0? op('*',v,0) : op('/',v,l); },
+  dot(a,b){ let s=0; for(let i=0;i<Math.max(vlen(a),vlen(b));i++) s+=at(a,i)*at(b,i); return s; },
+  cross(a,b){ return [at(a,1)*at(b,2)-at(a,2)*at(b,1), at(a,2)*at(b,0)-at(a,0)*at(b,2), at(a,0)*at(b,1)-at(a,1)*at(b,0)]; },
+  add(a,b){ return op('+',unwrap(a),unwrap(b)); }, sub(a,b){ return op('-',unwrap(a),unwrap(b)); },
+  mul(a,b){ return op('*',unwrap(a),unwrap(b)); }, div(a,b){ return op('/',unwrap(a),unwrap(b)); },
+  lookAt(from,to){ const d=op('-',unwrap(to),unwrap(from)); const x=at(d,0),y=at(d,1),z=at(d,2);
+    return [ -Math.atan2(y,Math.hypot(x,z))*180/Math.PI, Math.atan2(x,z)*180/Math.PI, 0 ]; },
+  degreesToRadians:(d)=>d*Math.PI/180, radiansToDegrees:(r)=>r*180/Math.PI,
+  timeToFrames(t,fps){ t=t===undefined?cur().store.time:+t; fps=fps||COMP.fps; return Math.floor(t*fps+1e-6); },
+  framesToTime(f,fps){ return (+f)/(fps||COMP.fps); },
+  timeToTimecode(t,base){ t=t===undefined?cur().store.time:+t; base=base||COMP.fps; const tf=Math.floor(t*base+1e-6);
+    const ff=tf%base, s=Math.floor(tf/base)%60, m=Math.floor(tf/base/60)%60, h=Math.floor(tf/base/3600); return h+':'+pad2(m)+':'+pad2(s)+':'+pad2(ff); },
+  timeToCurrentFormat(t){ return STATIC.timeToTimecode(t); },
+  hslToRgb:(c)=>hslToRgb(unwrap(c)), rgbToHsl:(c)=>rgbToHsl(unwrap(c)), hexToRgb,
+  loopOut:(type,n)=>loopImpl('out',type,n), loopIn:(type,n)=>loopImpl('in',type,n),
+  loopOutDuration(type,d){ return loopImpl('out',type,0); }, loopInDuration(type,d){ return loopImpl('in',type,0); },
+  key:(i)=>keyObj(cur().prop,i), nearestKey:(t)=>nearestKeyObj(cur().prop,+t),
+  valueAtTime:(t)=>cur().prop.pre(+t), velocityAtTime:(t)=>velAt(x=>cur().prop.pre(x),+t),
+  posterizeTime(fps){ const c=cur(); fps=+fps; if(fps>0){ c.t=Math.floor(c.t*fps+1e-6)/fps; c.store.time=c.t; c.store.value=c.prop.pre(c.t); c.frame=Math.floor(c.t*COMP.fps+1e-6); c.rng=mulberry(hashInts(c.layer.index,c.prop.uid,c.frame)); } },
+  createPath(points,inT,outT,closed){
+    points=unwrap(points)||[]; return {__path:true, points:points.map(p=>[at(p,0),at(p,1)]), inTangents:(inT||[]).map(p=>[at(p,0),at(p,1)]), outTangents:(outT||[]).map(p=>[at(p,0),at(p,1)]), closed:closed===undefined?true:!!closed}; },
+  comp(n){ return compAPI(); }
+});
+
+// 依目前執行環境動態取得的名稱
+const DYN = {
+  thisComp:()=>compAPI(), thisLayer:()=>layerAPI(cur().layer),
+  thisProperty:()=>{ const c=cur(); const P=c.prop; const o={}; attachPropMethods(o,P);
+    o.loopOut=STATIC.loopOut; o.loopIn=STATIC.loopIn; if(P.dims==='path') attachPathMethods(o,P); return o; },
+  index:()=>cur().layer.index, inPoint:()=>cur().layer.inPoint, outPoint:()=>cur().layer.outPoint,
+  numKeys:()=>cur().prop.keys.length,
+  velocity:()=>velAt(x=>cur().prop.pre(x),cur().t),
+  speed:()=>{ const v=velAt(x=>cur().prop.pre(x),cur().t); return isArr(v)?Math.hypot.apply(null,v):Math.abs(v); },
+  marker:()=>layerAPI(cur().layer).marker,
+  effect:()=>layerAPI(cur().layer).effect,
+  transform:()=>layerAPI(cur().layer).transform,
+  position:()=>propValue(cur().layer.props.position), scale:()=>propValue(cur().layer.props.scale),
+  rotation:()=>propValue(cur().layer.props.rotation), opacity:()=>propValue(cur().layer.props.opacity),
+  anchorPoint:()=>propValue(cur().layer.props.anchorPoint),
+  text:()=>layerAPI(cur().layer).text, content:()=>layerAPI(cur().layer).content,
+  toComp:()=>layerAPI(cur().layer).toComp, fromComp:()=>layerAPI(cur().layer).fromComp,
+  name:()=>cur().layer.name,
+  textIndex:()=>{ const c=cur(); if(c.textIndex==null) throw aeErr('textIndex 只能用在文字動畫的「表達式選取器」裡'); return c.textIndex; },
+  textTotal:()=>{ const c=cur(); if(c.textTotal==null) throw aeErr('textTotal 只能用在文字動畫的「表達式選取器」裡'); return c.textTotal; },
+  selectorValue:()=>{ const c=cur(); return [100,100,100]; }
+};
+const SAFE = new Set(['Math','Number','String','Array','Object','JSON','parseInt','parseFloat','isNaN','isFinite','Boolean','Date','RegExp','Error','undefined','NaN','Infinity','encodeURIComponent','decodeURIComponent']);
+
+// ================= 直譯器 =================
+const CACHE=new Map();
+function compile(code){
+  let c=CACHE.get(code); if(c) return c;
+  try{
+    if(typeof acorn==='undefined') throw {message:'語法解析器載入失敗，請重新整理頁面'};
+    const ast=acorn.parse(code,{ecmaVersion:2020,sourceType:'script',allowReturnOutsideFunction:true,locations:true});
+    c={ast};
+  }catch(e){
+    let m=(e.message||String(e)).replace(/\s*\(\d+:\d+\)$/,'');
+    m=m.replace(/^Unexpected token/,'非預期的符號').replace(/^Unterminated string constant/,'字串沒有結尾引號')
+       .replace(/^Unexpected character/,'非預期的字元').replace(/^Unterminated template/,'樣板字串沒有結尾');
+    c={error:{msg:'語法錯誤：'+m, line:e.loc?e.loc.line:null}};
+  }
+  if(CACHE.size>400) CACHE.clear();
+  CACHE.set(code,c); return c;
+}
+
+class Scope{ constructor(parent,isFn,vars){ this.p=parent; this.fn=isFn; this.v=vars||Object.create(null); } }
+const BREAK={t:'break'}, CONT={t:'continue'};
+let COMPLETION, STEPS, ROOT, CURLINE;
+
+function runProgram(ast,store){
+  const saveC=COMPLETION, saveS=STEPS, saveR=ROOT, saveL=CURLINE;
+  COMPLETION=undefined; STEPS=0; ROOT=new Scope(null,true,store); CURLINE=1;
+  try{
+    const sig=execBody(ast.body,ROOT);
+    if(sig && sig.t==='return') return sig.v;
+    return COMPLETION;
+  }catch(e){ if(e && typeof e==='object' && !e.aeLine) { try{ e.aeLine=CURLINE; }catch(_){} } throw e; }
+  finally{ COMPLETION=saveC; STEPS=saveS; ROOT=saveR; CURLINE=saveL; }
+}
+
+function lookupScope(s,name){ for(;s;s=s.p){ if(name in s.v) return s; } return null; }
+function getVar(s,name){
+  const sc=lookupScope(s,name); if(sc) return sc.v[name];
+  const d=DYN[name]; if(d) return d();
+  if(SAFE.has(name)) return globalThis[name];
+  throw aeErr(name+' 未定義');
+}
+function hasVar(s,name){ return !!lookupScope(s,name) || !!DYN[name] || SAFE.has(name); }
+function setVar(s,name,val){ const sc=lookupScope(s,name); if(sc && sc!==ROOT){ sc.v[name]=val; return; } // root 或未宣告 → root
+  // 若在 STATIC 原型上（內建函式）則於 store 遮蔽
+  ROOT.v[name]=val; }
+function fnScope(s){ while(s && !s.fn) s=s.p; return s; }
+function declare(s,kind,name,val){ const target = kind==='var' ? fnScope(s) : s; target.v[name]=val; }
+
+function hoist(body,s){ for(const st of body){ if(st.type==='FunctionDeclaration') declare(s,'var',st.id.name,makeFn(st,s)); } }
+function execBody(body,s){ hoist(body,s); for(const st of body){ const r=exec(st,s); if(r) return r; } }
+
+function tick(){ if(++STEPS>200000) throw aeErr('執行步數過多（可能是無窮迴圈）'); }
+
+function bindPattern(p,val,s,kind){
+  switch(p.type){
+    case 'Identifier': if(kind) declare(s,kind,p.name,val); else setVar(s,p.name,val); return;
+    case 'ArrayPattern': p.elements.forEach((el,i)=>{ if(!el) return; if(el.type==='RestElement') bindPattern(el.argument,(val||[]).slice(i),s,kind); else bindPattern(el,val==null?undefined:val[i],s,kind); }); return;
+    case 'ObjectPattern': for(const pr of p.properties){ if(pr.type==='RestElement') continue; const k=pr.computed?ev(pr.key,s):(pr.key.name!==undefined?pr.key.name:pr.key.value); bindPattern(pr.value,val==null?undefined:val[k],s,kind); } return;
+    case 'AssignmentPattern': bindPattern(p.left, val===undefined? ev(p.right,s) : val, s, kind); return;
+    case 'MemberExpression': { const o=ev(p.object,s); o[p.computed?ev(p.property,s):p.property.name]=val; return; }
+  }
+  throw aeErr('不支援的指派方式');
+}
+
+function exec(n,s){
+  tick(); if(n.loc) CURLINE=n.loc.start.line;
+  switch(n.type){
+    case 'ExpressionStatement': COMPLETION=ev(n.expression,s); return;
+    case 'VariableDeclaration': for(const d of n.declarations){ const v=d.init?ev(d.init,s):undefined; if(d.id.type==='Identifier' && !d.init && n.kind==='var' && lookupScope(fnScope(s),d.id.name)) continue; bindPattern(d.id,v,s,n.kind); } return;
+    case 'FunctionDeclaration': return;
+    case 'EmptyStatement': return;
+    case 'BlockStatement': return execBody(n.body,new Scope(s,false));
+    case 'IfStatement': if(ev(n.test,s)) return exec(n.consequent,s); else if(n.alternate) return exec(n.alternate,s); return;
+    case 'ForStatement': { const ls=new Scope(s,false);
+      if(n.init){ if(n.init.type==='VariableDeclaration') exec(n.init,ls); else ev(n.init,ls); }
+      for(;;){ tick(); if(n.test && !ev(n.test,ls)) break; const r=exec(n.body,ls); if(r===BREAK) break; if(r && r!==CONT) return r; if(n.update) ev(n.update,ls); } return; }
+    case 'WhileStatement': while(ev(n.test,s)){ tick(); const r=exec(n.body,s); if(r===BREAK) break; if(r && r!==CONT) return r; } return;
+    case 'DoWhileStatement': do{ tick(); const r=exec(n.body,s); if(r===BREAK) break; if(r && r!==CONT) return r; } while(ev(n.test,s)); return;
+    case 'ForOfStatement': case 'ForInStatement': {
+      const obj=ev(n.right,s); const items = n.type==='ForOfStatement' ? Array.from(obj) : Object.keys(obj);
+      for(const it of items){ tick(); const ls=new Scope(s,false);
+        if(n.left.type==='VariableDeclaration') bindPattern(n.left.declarations[0].id,it,ls,n.left.kind); else bindPattern(n.left,it,ls,null);
+        const r=exec(n.body,ls); if(r===BREAK) break; if(r && r!==CONT) return r; } return; }
+    case 'BreakStatement': return BREAK;
+    case 'ContinueStatement': return CONT;
+    case 'ReturnStatement': return {t:'return', v:n.argument?ev(n.argument,s):undefined};
+    case 'ThrowStatement': throw ev(n.argument,s);
+    case 'SwitchStatement': { const d=ev(n.discriminant,s); let hit=false; const ls=new Scope(s,false);
+      for(const c of n.cases){ if(!hit && (c.test===null || ev(c.test,ls)===d)) hit=true;
+        if(hit){ for(const st of c.consequent){ const r=exec(st,ls); if(r===BREAK) return; if(r) return r; } } }
+      if(!hit){ const dc=n.cases.findIndex(c=>c.test===null); if(dc>=0){ for(let i=dc;i<n.cases.length;i++) for(const st of n.cases[i].consequent){ const r=exec(st,ls); if(r===BREAK) return; if(r) return r; } } }
+      return; }
+    case 'TryStatement': { let r;
+      try{ r=exec(n.block,s); }
+      catch(e){ if(!n.handler) throw e; const ls=new Scope(s,false); if(n.handler.param) bindPattern(n.handler.param,e,ls,'let'); r=exec(n.handler.body,ls); }
+      finally{ if(n.finalizer){ const f=exec(n.finalizer,s); if(f) r=f; } }
+      return r; }
+    case 'LabeledStatement': return exec(n.body,s);
+  }
+  throw aeErr('不支援的語法：'+n.type);
+}
+
+let DEPTH=0;
+function makeFn(n,s){
+  const f=function(){
+    if(++DEPTH>200){ DEPTH=0; throw aeErr('函式遞迴過深'); }
+    const fs=new Scope(s,true); const args=arguments;
+    try{
+      n.params.forEach((p,i)=>{ if(p.type==='RestElement') bindPattern(p.argument,Array.prototype.slice.call(args,i),fs,'let'); else bindPattern(p,args[i],fs,'let'); });
+      if(n.type!=='ArrowFunctionExpression') fs.v.arguments=args;
+      if(n.expression) return ev(n.body,fs);
+      const saveC=COMPLETION; const r=execBody(n.body.body,fs); COMPLETION=saveC;
+      return r && r.t==='return' ? r.v : undefined;
+    } finally { DEPTH--; }
+  };
+  if(n.id) declareFnName(f,n);
+  return f;
+}
+function declareFnName(f,n){ try{ Object.defineProperty(f,'name',{value:n.id.name}); }catch(e){} }
+
+function memberKey(n,s){ return n.computed ? ev(n.property,s) : n.property.name; }
+function getMember(obj,key,n){
+  if(obj===undefined||obj===null) throw aeErr('無法讀取 '+obj+' 的屬性 "'+String(key)+'"'+(n&&n.object&&n.object.type==='Identifier'?'（'+n.object.name+' 是 '+obj+'）':''));
+  return obj[key];
+}
+function calleeName(n){ if(n.type==='Identifier') return n.name; if(n.type==='MemberExpression' && !n.computed) return calleeName(n.object)+'.'+n.property.name; return '表達式'; }
+function evArgs(list,s){ const out=[]; for(const a of list){ if(a.type==='SpreadElement') out.push.apply(out,Array.from(ev(a.argument,s))); else out.push(ev(a,s)); } return out; }
+
+function assignOp(o,a,b){
+  switch(o){ case '+': case '-': case '*': case '/': case '%': return op(o,a,b);
+    case '**': return Math.pow(a,b); case '<<': return a<<b; case '>>': return a>>b; case '>>>': return a>>>b;
+    case '|': return a|b; case '&': return a&b; case '^': return a^b; }
+}
+
+function ev(n,s){
+  switch(n.type){
+    case 'Literal': return n.regex ? new RegExp(n.regex.pattern,n.regex.flags) : n.value;
+    case 'Identifier': return getVar(s,n.name);
+    case 'TemplateLiteral': { let out=''; n.quasis.forEach((q,i)=>{ out+=q.value.cooked; if(i<n.expressions.length) out+=String(ev(n.expressions[i],s)); }); return out; }
+    case 'ArrayExpression': { const out=[]; for(const el of n.elements){ if(!el) out.push(undefined); else if(el.type==='SpreadElement') out.push.apply(out,Array.from(ev(el.argument,s))); else out.push(ev(el,s)); } return out; }
+    case 'ObjectExpression': { const o={}; for(const p of n.properties){ if(p.type==='SpreadElement'){ Object.assign(o,ev(p.argument,s)); continue; }
+        const k=p.computed?ev(p.key,s):(p.key.type==='Identifier'?p.key.name:p.key.value);
+        if(p.kind==='get'){ Object.defineProperty(o,k,{get:makeFn(p.value,s),enumerable:true,configurable:true}); continue; }
+        o[k]=ev(p.value,s); } return o; }
+    case 'FunctionExpression': case 'ArrowFunctionExpression': { const f=makeFn(n,s); return f; }
+    case 'UnaryExpression': {
+      if(n.operator==='typeof'){ if(n.argument.type==='Identifier' && !hasVar(s,n.argument.name)) return 'undefined'; return typeof ev(n.argument,s); }
+      if(n.operator==='delete'){ if(n.argument.type==='MemberExpression'){ const o=ev(n.argument.object,s); return delete o[memberKey(n.argument,s)]; } return true; }
+      const v=ev(n.argument,s);
+      switch(n.operator){ case '-': return neg(v); case '+': return +v; case '!': return !v; case '~': return ~v; case 'void': return undefined; } break; }
+    case 'UpdateExpression': {
+      const a=n.argument; let old, set;
+      if(a.type==='Identifier'){ old=+getVar(s,a.name); set=v=>setVar(s,a.name,v); }
+      else { const o=ev(a.object,s), k=memberKey(a,s); old=+getMember(o,k,a); set=v=>{o[k]=v;}; }
+      const nv=n.operator==='++'?old+1:old-1; set(nv); return n.prefix?nv:old; }
+    case 'BinaryExpression': {
+      const a=ev(n.left,s), b=ev(n.right,s);
+      switch(n.operator){
+        case '+': case '-': case '*': case '/': case '%': return op(n.operator,a,b);
+        case '==': return a==b; case '!=': return a!=b; case '===': return a===b; case '!==': return a!==b;
+        case '<': return a<b; case '>': return a>b; case '<=': return a<=b; case '>=': return a>=b;
+        case '**': return Math.pow(a,b); case '&': return a&b; case '|': return a|b; case '^': return a^b;
+        case '<<': return a<<b; case '>>': return a>>b; case '>>>': return a>>>b;
+        case 'in': return a in b; case 'instanceof': return a instanceof b;
+      } break; }
+    case 'LogicalExpression': { const a=ev(n.left,s);
+      if(n.operator==='&&') return a?ev(n.right,s):a; if(n.operator==='||') return a?a:ev(n.right,s); return (a===null||a===undefined)?ev(n.right,s):a; }
+    case 'ConditionalExpression': return ev(n.test,s)?ev(n.consequent,s):ev(n.alternate,s);
+    case 'AssignmentExpression': {
+      const L=n.left;
+      if(n.operator==='='){ const v=ev(n.right,s); bindPattern(L,v,s,null); return v; }
+      const o2=n.operator.slice(0,-1);
+      if(o2==='&&'||o2==='||'||o2==='??'){ const cv=ev(L,s); const go= o2==='&&'?cv : o2==='||'?!cv : (cv==null); if(!go) return cv; const v=ev(n.right,s); bindPattern(L,v,s,null); return v; }
+      if(L.type==='Identifier'){ const v=assignOp(o2,getVar(s,L.name),ev(n.right,s)); setVar(s,L.name,v); return v; }
+      const o=ev(L.object,s), k=memberKey(L,s); const v=assignOp(o2,getMember(o,k,L),ev(n.right,s)); o[k]=v; return v; }
+    case 'SequenceExpression': { let v; for(const e of n.expressions) v=ev(e,s); return v; }
+    case 'MemberExpression': { const o=ev(n.object,s); if(n.optional && o==null) return undefined; return getMember(o,memberKey(n,s),n); }
+    case 'ChainExpression': return ev(n.expression,s);
+    case 'CallExpression': {
+      let fn, self;
+      if(n.callee.type==='MemberExpression'){ self=ev(n.callee.object,s); if(n.callee.optional && self==null) return undefined; fn=getMember(self,memberKey(n.callee,s),n.callee); }
+      else { fn=ev(n.callee,s); self=undefined; }
+      if(n.optional && fn==null) return undefined;
+      if(typeof fn!=='function') throw aeErr(calleeName(n.callee)+' 不是函式');
+      const args=evArgs(n.arguments,s);
+      return fn.apply(self,args); }
+    case 'NewExpression': { const C=ev(n.callee,s); if(typeof C!=='function') throw aeErr(calleeName(n.callee)+' 不是建構式'); return Reflect.construct(C,evArgs(n.arguments,s)); }
+    case 'ThisExpression': return undefined;
+    case 'TaggedTemplateExpression': throw aeErr('不支援標籤樣板字串');
+  }
+  throw aeErr('不支援的語法：'+n.type);
+}
+
+function setScene(sc){ SCENE=sc; }
+
+return { COMP, PROP_INFO, Scene, Layer, Prop, setScene, evalProp, compile, hslToRgb, unwrap, get scene(){ return SCENE; } };
+})();
+if(typeof module!=='undefined') module.exports=AE;
+
+</script>
+<script>
+// ================= 範例庫 =================
+var LIB = (function(){
+const R = String.raw;
+const C = { blue:[0.24,0.61,0.94], amber:[0.96,0.65,0.24], coral:[0.94,0.39,0.34], green:[0.36,0.79,0.52], violet:[0.62,0.52,0.96], white:[0.93,0.94,0.96], grey:[0.55,0.58,0.63] };
+
+function ring(n, rf){ const pts=[]; for(let i=0;i<n;i++){ const a=i/n*Math.PI*2-Math.PI/2, r=rf(i); pts.push([Math.round(Math.cos(a)*r*10)/10, Math.round(Math.sin(a)*r*10)/10]); } return {__path:true, points:pts, inTangents:[], outTangents:[], closed:true}; }
+const SHAPE_A = ring(10, ()=>210);
+const SHAPE_B = ring(10, i=> i%2==0 ? 320 : 125);
+
+const CATS = [
+  { id:'time',    name:'時間與基礎',       en:'time · value · index', desc:'用 time 讓屬性隨時間變化，是所有表達式動畫的起點。' },
+  { id:'random',  name:'隨機與抖動',       en:'wiggle · random · noise', desc:'製造自然晃動、閃爍、散佈與雜訊。' },
+  { id:'loop',    name:'循環',             en:'loopOut · loopIn', desc:'讓手動設定的關鍵影格無限重複。' },
+  { id:'interp',  name:'插值與映射',       en:'linear · ease · clamp', desc:'把一個範圍的數值轉換到另一個範圍。' },
+  { id:'math',    name:'數學與週期運動',   en:'Math.sin · cos · abs', desc:'三角函式與數學運算做出擺動、繞圓、彈跳。' },
+  { id:'physics', name:'關鍵影格與物理',   en:'velocity · key() · valueAtTime', desc:'讀取關鍵影格與速度，加上慣性、彈跳與延遲。' },
+  { id:'layers',  name:'圖層引用與 index', en:'thisComp.layer() · index', desc:'讓圖層彼此連動，或用 index 讓複製圖層自動錯開。' },
+  { id:'controls',name:'表達式控制效果',   en:'effect()("…")', desc:'用滑桿、核取方塊、顏色等效果當作控制面板。' },
+  { id:'text',    name:'文字',             en:'sourceText', desc:'計數器、打字機、倒數計時、亂碼解碼。' },
+  { id:'color',   name:'顏色',             en:'hslToRgb · hexToRgb', desc:'顏色是 [R, G, B, A] 四個 0~1 的數值。' },
+  { id:'path',    name:'形狀路徑',         en:'createPath()', desc:'用程式產生多邊形、波形與星形路徑。' },
+  { id:'logic',   name:'條件、標記與邏輯', en:'if · else · marker', desc:'依時間、數值或標記切換狀態。' },
+  { id:'js',      name:'JavaScript 基礎語法', en:'變數 · 陣列 · 迴圈 · 函式', desc:'AE 表達式就是 JavaScript，這些語法都能用。' },
+  { id:'lab',     name:'自由實驗室',       en:'playground', desc:'選一個屬性，從空白開始寫自己的表達式。' }
+];
+
+const EX = [
+// ---------------- 時間 ----------------
+{ id:'time-rotate', cat:'time', name:'持續旋轉', sig:'time * 速度', prop:'rotation',
+  desc:'time 是目前時間（秒）。乘上一個數字就得到每秒增加多少，最常用來做持續旋轉。',
+  how:['套用在「旋轉」屬性'], tip:'負數會反方向旋轉。想要每秒轉一圈就用 time * 360。',
+  code:R`speed = 90; // @每秒角度 -720~720 1
+time * speed`,
+  layer:{ shape:'rect' } },
+{ id:'time-move', cat:'time', name:'等速移動並重複', sig:'(time * 速度) % 寬度', prop:'position',
+  desc:'% 是取餘數，讓數值超過合成寬度後回到 0，形成跑馬燈式的等速重複。',
+  how:['套用在「位置」屬性','value[1] 代表保留原本的 Y 值'], trail:true,
+  code:R`speed = 500; // @每秒像素 0~1500 10
+x = (time * speed) % thisComp.width;
+[x, value[1]]`,
+  layer:{ shape:'circle', size:120, color:C.amber } },
+{ id:'time-value', cat:'time', name:'在原值上疊加', sig:'value + [x, y]', prop:'position',
+  desc:'value 是屬性原本的值（含關鍵影格）。在 value 上加減，可以保留你手動設定的位置再做偏移。',
+  how:['套用在「位置」屬性','陣列會逐項相加：[a, b] + [c, d] = [a+c, b+d]'], trail:true,
+  code:R`offsetY = 200; // @上下幅度 0~400 1
+value + [0, Math.sin(time * 3) * offsetY]`,
+  layer:{ shape:'rect', keys:{ position:[[0,[400,540]],[3,[1520,540]],[6,[400,540]]] } } },
+{ id:'time-posterize', cat:'time', name:'降低影格率', sig:'posterizeTime(fps)', prop:'position',
+  desc:'posterizeTime 讓後面的運算只在每秒指定次數更新，做出逐格動畫、定格抖動的質感。',
+  how:['放在表達式第一行','後面接 wiggle 等任何會變化的運算'], trail:true,
+  code:R`fps = 4; // @每秒更新次數 1~30 1
+posterizeTime(fps);
+wiggle(5, 140)`,
+  layer:{ shape:'star', size:180, color:C.amber } },
+{ id:'time-timecode', cat:'time', name:'顯示時間碼與影格', sig:'timeToTimecode() · timeToFrames()', prop:'sourceText',
+  desc:'把目前時間轉成時間碼或影格數，常用在畫面上的計時、除錯資訊。',
+  how:['建立文字圖層 → 展開「文字」→ 在「來源文字」套用','\\r 代表換行'],
+  code:R`"時間碼 " + timeToTimecode(time) + "\r影格 " + timeToFrames(time)`,
+  layer:{ shape:'text', fontSize:88 } },
+{ id:'time-inout', cat:'time', name:'依入出點自動淡入淡出', sig:'inPoint · outPoint', prop:'opacity',
+  desc:'inPoint / outPoint 是圖層開始與結束的時間。搭配 linear 就能讓任何長度的圖層自動淡入淡出。',
+  how:['套用在「不透明度」','修剪圖層長度時，淡入淡出會自動跟著移動'],
+  code:R`fade = 0.6; // @淡入淡出秒數 0.1~2 0.1
+fadeIn = linear(time, inPoint, inPoint + fade, 0, 100);
+fadeOut = linear(time, outPoint - fade, outPoint, 100, 0);
+Math.min(fadeIn, fadeOut)`,
+  layer:{ shape:'rect', size:260, inPoint:0.5, outPoint:5.5, color:C.violet } },
+
+// ---------------- 隨機 ----------------
+{ id:'wiggle-basic', cat:'random', name:'wiggle 隨機晃動', sig:'wiggle(頻率, 幅度)', prop:'position',
+  desc:'wiggle 在原值附近平滑地隨機擺動。頻率是每秒晃幾次，幅度是最大偏移量（像素、度數或百分比，依屬性而定）。',
+  how:['可套用在位置、旋轉、縮放、不透明度等任何數值屬性'], trail:true,
+  code:R`freq = 2; // @頻率 0~10 0.1
+amp = 120; // @幅度 0~400 1
+wiggle(freq, amp)`,
+  layer:{ shape:'rect' } },
+{ id:'wiggle-axis', cat:'random', name:'只晃動單一軸', sig:'w = wiggle(); [w[0], value[1]]', prop:'position',
+  desc:'先把 wiggle 結果存成變數，再只取需要的軸。用 [0] 取 X、[1] 取 Y。',
+  how:['套用在「位置」','想只晃 Y 就改成 [value[0], w[1]]'], trail:true,
+  code:R`freq = 3; // @頻率 0~10 0.1
+amp = 300; // @幅度 0~600 1
+w = wiggle(freq, amp);
+[w[0], value[1]]`,
+  layer:{ shape:'circle', size:140, color:C.green } },
+{ id:'wiggle-octaves', cat:'random', name:'wiggle 細節層次', sig:'wiggle(freq, amp, octaves, amp_mult)', prop:'rotation',
+  desc:'第三個參數 octaves 疊加更多層高頻細節，第四個 amp_mult 控制每層強度。數值高會更毛躁、像手持抖動。',
+  how:['套用在「旋轉」，看右側圖表比較曲線變化'],
+  code:R`freq = 1; // @頻率 0~6 0.1
+amp = 45; // @幅度 0~180 1
+octaves = 4; // @細節層數 1~8 1
+ampMult = 0.6; // @每層強度 0~1 0.05
+wiggle(freq, amp, octaves, ampMult)`,
+  layer:{ shape:'arrow', size:260, color:C.amber } },
+{ id:'wiggle-loop', cat:'random', name:'可無縫循環的 wiggle', sig:'linear(t, 0, loop, w1, w2)', prop:'position',
+  desc:'在一個循環長度內，把兩段時間錯開的 wiggle 混合，讓結尾正好接回開頭，適合做循環 GIF 或背景。',
+  how:['套用在「位置」','loopTime 設成合成或循環段落的長度'], trail:true,
+  code:R`freq = 1; // @頻率 0~5 0.1
+amp = 160; // @幅度 0~400 1
+loopTime = 3; // @循環秒數 1~6 0.5
+t = time % loopTime;
+w1 = wiggle(freq, amp, 1, 0.5, t);
+w2 = wiggle(freq, amp, 1, 0.5, t - loopTime);
+linear(t, 0, loopTime, w1, w2)`,
+  layer:{ shape:'circle', size:130, color:C.violet } },
+{ id:'random-scatter', cat:'random', name:'隨機散佈（固定不動）', sig:'seedRandom(index, true); random(min, max)', prop:'position',
+  desc:'random 每格都會變。先呼叫 seedRandom(種子, true)，第二個參數 true 代表「不隨時間改變」，每個圖層用自己的 index 當種子就會各自落在不同位置。',
+  how:['套用在「位置」後，按 Ctrl/Cmd + D 複製圖層，每個複本自動散開','改變 seed 可以整組重新洗牌'],
+  code:R`seed = 1; // @亂數種子 1~50 1
+margin = 100; // @邊界留白 0~400 1
+seedRandom(index + seed * 100, true);
+random([margin, margin], [thisComp.width - margin, thisComp.height - margin])`,
+  layer:{ shape:'circle', size:60, color:C.amber }, dup:{ n:24, layout:'same' } },
+{ id:'random-flicker', cat:'random', name:'隨機閃爍', sig:'random(min, max)', prop:'opacity',
+  desc:'不加 seedRandom 時，random 每一格都產生新數字，可做燈光、霓虹、訊號不穩的閃爍。搭配 posterizeTime 控制閃爍速度。',
+  how:['套用在「不透明度」'],
+  code:R`rate = 12; // @每秒閃幾次 1~30 1
+minO = 15; // @最低不透明度 0~100 1
+posterizeTime(rate);
+random(minO, 100)`,
+  layer:{ shape:'star', size:320, color:C.amber } },
+{ id:'random-gauss', cat:'random', name:'常態分佈亂數', sig:'gaussRandom(min, max)', prop:'position',
+  desc:'gaussRandom 產生的數值集中在範圍中央、越外圍越少，看起來比 random 更自然，適合做星群、粒子聚落。',
+  how:['套用在「位置」並複製多個圖層'],
+  code:R`spread = 260; // @擴散範圍 50~500 10
+seedRandom(index, true);
+c = [thisComp.width / 2, thisComp.height / 2];
+gaussRandom(c - [spread, spread], c + [spread, spread])`,
+  layer:{ shape:'circle', size:34, color:C.white }, dup:{ n:40, layout:'same' } },
+{ id:'noise-wave', cat:'random', name:'noise 平滑雜訊波', sig:'noise(值)', prop:'position',
+  desc:'noise 輸入任何數字，回傳 -1 到 1 之間平滑變化的值。相同輸入永遠得到相同結果，把 index 加進輸入就能讓相鄰圖層連成一條起伏的波。',
+  how:['套用在「位置」並複製多個圖層'],
+  code:R`speed = 0.8; // @速度 0~3 0.1
+amp = 260; // @起伏高度 0~500 1
+spacing = 0.25; // @相鄰差異 0~1 0.01
+[value[0], value[1] + noise(time * speed + index * spacing) * amp]`,
+  layer:{ shape:'circle', size:56, color:C.green }, dup:{ n:16, layout:'row' } },
+
+// ---------------- 循環 ----------------
+{ id:'loop-cycle', cat:'loop', name:'loopOut("cycle") 重複', sig:'loopOut("cycle")', prop:'position',
+  desc:'在最後一個關鍵影格之後，從第一個關鍵影格重新播放。時間軸上的菱形是預先設好的關鍵影格。',
+  how:['先在屬性上設至少兩個關鍵影格','再對同一個屬性加上表達式'], trail:true,
+  code:R`loopOut("cycle")`,
+  layer:{ shape:'rect', keys:{ position:[[0,[460,620]],[0.8,[960,320]],[1.6,[1460,620]]] } } },
+{ id:'loop-pingpong', cat:'loop', name:'loopOut("pingpong") 來回', sig:'loopOut("pingpong")', prop:'rotation',
+  desc:'播到最後一格後倒著播回來，再正著播，像鐘擺一樣來回。只需要兩個關鍵影格就能做擺動。',
+  how:['套用在已有關鍵影格的「旋轉」','錨點設在圖形上方就會像鐘擺'],
+  code:R`loopOut("pingpong")`,
+  layer:{ shape:'rect', size:[60,360], color:C.amber, base:{ position:[960,260], anchorPoint:[0,-170] }, keys:{ rotation:[[0,-35],[1,35]] } } },
+{ id:'loop-offset', cat:'loop', name:'loopOut("offset") 累加', sig:'loopOut("offset")', prop:'position',
+  desc:'每次重複時，從上一輪的結束值繼續累加，適合做走路、樓梯、持續前進的步伐。',
+  how:['套用在「位置」，關鍵影格只做一步的位移'], trail:true,
+  code:R`loopOut("offset")`,
+  layer:{ shape:'rect', size:120, color:C.green, keys:{ position:[[0,[220,640]],[0.5,[320,440]],[1,[420,640]]] } } },
+{ id:'loop-continue', cat:'loop', name:'loopOut("continue") 延續', sig:'loopOut("continue")', prop:'rotation',
+  desc:'沿著最後一個關鍵影格的速度與方向繼續前進。旋轉設 0→120 度之後，就會永遠以同樣速度轉下去。',
+  how:['最後一個關鍵影格請用「線性」，速度才不會是 0'],
+  code:R`loopOut("continue")`,
+  layer:{ shape:'star', size:260, color:C.violet, keys:{ rotation:[[0,0,'linear'],[1,120,'linear']] } } },
+{ id:'loop-in', cat:'loop', name:'loopIn() 在第一格之前循環', sig:'loopIn("cycle")', prop:'position',
+  desc:'loopIn 處理第一個關鍵影格「之前」的時間。關鍵影格設在 3 秒之後，前面的時間也會照著循環。',
+  how:['套用在「位置」','loopIn 與 loopOut 可以分開用，參數相同'], trail:true,
+  code:R`loopIn("cycle")`,
+  layer:{ shape:'circle', size:120, color:C.coral, keys:{ position:[[3,[560,540]],[3.6,[960,320]],[4.2,[1360,540]],[4.8,[960,760]],[5.4,[560,540]]] } } },
+{ id:'loop-numkeys', cat:'loop', name:'只循環最後幾格', sig:'loopOut("cycle", 影格數)', prop:'position',
+  desc:'第二個參數指定只循環最後 N 段關鍵影格。前段可以做進場動畫，後段才循環。設 0 代表全部。',
+  how:['套用在「位置」，調整「循環段數」觀察差異'], trail:true,
+  code:R`n = 2; // @循環段數 0~3 1
+loopOut("cycle", n)`,
+  layer:{ shape:'rect', size:120, color:C.amber, keys:{ position:[[0,[200,900]],[0.8,[960,540]],[1.4,[1300,300]],[2,[1600,540]]] } } },
+
+// ---------------- 插值 ----------------
+{ id:'interp-linear', cat:'interp', name:'linear 範圍映射', sig:'linear(t, tMin, tMax, v1, v2)', prop:'rotation',
+  desc:'當 t 從 tMin 變到 tMax，輸出從 v1 等速變到 v2；超出範圍會停在端點。最常用的「把 A 範圍換算成 B 範圍」。',
+  how:['套用在「旋轉」','把 time 換成任何數值（如另一圖層的位置）就是連動'],
+  code:R`startT = 1; // @開始秒數 0~5 0.1
+endT = 4; // @結束秒數 0.5~6 0.1
+endAngle = 360; // @結束角度 -720~720 1
+linear(time, startT, endT, 0, endAngle)`,
+  layer:{ shape:'rect', size:220 } },
+{ id:'interp-compare', cat:'interp', name:'四種插值比較', sig:'linear · ease · easeIn · easeOut', prop:'position',
+  desc:'同樣從左移到右，ease 頭尾都放慢、easeIn 開頭慢、easeOut 結尾慢。看圖表能直接比較曲線形狀。',
+  how:['套用在「位置」，四個圖層用 index 選擇不同函式'], labels:true,
+  code:R`dur = 2; // @移動秒數 0.5~3 0.1
+t = time % 3;
+x0 = 300; x1 = 1620;
+if (index == 1) x = linear(t, 0, dur, x0, x1);
+else if (index == 2) x = ease(t, 0, dur, x0, x1);
+else if (index == 3) x = easeIn(t, 0, dur, x0, x1);
+else x = easeOut(t, 0, dur, x0, x1);
+[x, value[1]]`,
+  layer:{ shape:'circle', size:90 }, dup:{ n:4, layout:'col', names:['linear','ease','easeIn','easeOut'], colors:[C.grey,C.blue,C.amber,C.green] } },
+{ id:'interp-map-prop', cat:'interp', name:'用位置控制不透明度', sig:'linear(position[0], …)', prop:'opacity',
+  desc:'把自己的 X 座標映射成不透明度：越往右越清楚。輸入不一定是時間，任何屬性數值都可以。',
+  how:['套用在「不透明度」','位置本身有來回的關鍵影格'],
+  code:R`x = transform.position[0];
+fromX = 400; // @起點 X 0~1920 10
+toX = 1520; // @終點 X 0~1920 10
+linear(x, fromX, toX, 5, 100)`,
+  layer:{ shape:'rect', size:200, color:C.violet, keys:{ position:[[0,[400,540]],[2,[1520,540]]] }, expr:{ position:'loopOut("pingpong")' } } },
+{ id:'interp-clamp', cat:'interp', name:'clamp 限制範圍', sig:'clamp(值, 最小, 最大)', prop:'position',
+  desc:'clamp 把數值限制在範圍內。這裡讓大幅晃動的 wiggle 永遠不會超出中間的框。',
+  how:['套用在「位置」','clamp 也可以直接接陣列：clamp(w, [x1,y1], [x2,y2])'], trail:true,
+  code:R`w = wiggle(1.5, 600);
+left = 660; // @左邊界 0~960 10
+right = 1260; // @右邊界 960~1920 10
+[clamp(w[0], left, right), clamp(w[1], 340, 740)]`,
+  layer:{ shape:'circle', size:100, color:C.coral },
+  after:[{ name:'範圍框', shape:'frame', size:[600,400], color:C.grey }] },
+
+// ---------------- 數學 ----------------
+{ id:'math-sin', cat:'math', name:'Math.sin 鐘擺擺動', sig:'振幅 * Math.sin(time * 頻率 * 2π)', prop:'rotation',
+  desc:'正弦波在 -1 到 1 之間平滑來回。乘上振幅得到擺動角度，頻率代表每秒擺幾次。',
+  how:['套用在「旋轉」，錨點移到圖形上方'],
+  code:R`amp = 40; // @擺動角度 0~90 1
+freq = 0.8; // @每秒次數 0~4 0.05
+amp * Math.sin(time * freq * Math.PI * 2)`,
+  layer:{ shape:'rect', size:[50,380], color:C.amber, base:{ position:[960,240], anchorPoint:[0,-180] } } },
+{ id:'math-orbit', cat:'math', name:'繞圓運動', sig:'中心 + [cos(a), sin(a)] * 半徑', prop:'position',
+  desc:'cos 給 X、sin 給 Y，角度隨時間增加就會繞圓。X、Y 半徑不同就變成橢圓。',
+  how:['套用在「位置」'], trail:true,
+  code:R`radius = 300; // @半徑 0~500 1
+speed = 0.5; // @每秒圈數 -2~2 0.05
+center = [thisComp.width / 2, thisComp.height / 2];
+a = time * speed * Math.PI * 2;
+center + [Math.cos(a), Math.sin(a)] * radius`,
+  layer:{ shape:'circle', size:100, color:C.green },
+  after:[{ name:'中心', shape:'null', size:60, color:C.coral }] },
+{ id:'math-decay', cat:'math', name:'衰減彈跳縮放', sig:'sin(t) / exp(t * 衰減)', prop:'scale',
+  desc:'正弦波除以指數函數，振幅會越來越小，做出 Q 彈、果凍般的縮放。',
+  how:['套用在「縮放」，回傳 [s, s] 保持等比'],
+  code:R`amp = 60; // @初始幅度 0~150 1
+freq = 3; // @頻率 0.5~8 0.1
+decay = 4; // @衰減速度 0.5~10 0.1
+t = time % 2;
+s = 100 + amp * Math.sin(t * freq * Math.PI * 2) / Math.exp(t * decay);
+[s, s]`,
+  layer:{ shape:'rect', size:240, color:C.coral } },
+{ id:'math-lissajous', cat:'math', name:'利薩茹曲線', sig:'[sin(t·a), sin(t·b)]', prop:'position',
+  desc:'X、Y 用不同頻率的正弦波，就能畫出 8 字形與各種花樣。頻率比例決定形狀。',
+  how:['套用在「位置」'], trail:true,
+  code:R`fa = 1; // @X 頻率 0.5~5 0.5
+fb = 2; // @Y 頻率 0.5~5 0.5
+[960 + Math.sin(time * fa * 1.5) * 600, 540 + Math.sin(time * fb * 1.5) * 330]`,
+  layer:{ shape:'circle', size:70, color:C.violet } },
+{ id:'math-step', cat:'math', name:'Math.floor 階梯移動', sig:'Math.floor(time * 速率)', prop:'position',
+  desc:'Math.floor 無條件捨去小數，讓連續的時間變成一格一格跳的整數，做出步進、跳格的動作。',
+  how:['套用在「位置」','改用 Math.round 會四捨五入'], trail:true,
+  code:R`rate = 2; // @每秒跳幾步 0.5~8 0.5
+steps = 6; // @總步數 2~12 1
+i = Math.floor(time * rate) % steps;
+[300 + i * (1320 / (steps - 1)), value[1]]`,
+  layer:{ shape:'rect', size:120, color:C.blue } },
+
+// ---------------- 物理 ----------------
+{ id:'phys-inertia', cat:'physics', name:'慣性回彈（Overshoot）', sig:'velocityAtTime(key(n).time)', prop:'position',
+  desc:'經典的慣性表達式：在每個關鍵影格停下時，依照進場速度加上一段衰減的回彈。關鍵影格只要做直線移動即可。',
+  how:['套用在已有關鍵影格的屬性（位置、縮放、旋轉都可）','關鍵影格建議用線性，速度越快回彈越明顯'], trail:true,
+  code:R`amp = 0.06; // @回彈幅度 0~0.2 0.005
+freq = 2.5; // @回彈頻率 0.5~6 0.1
+decay = 5; // @衰減 1~12 0.5
+n = 0;
+if (numKeys > 0) {
+  n = nearestKey(time).index;
+  if (key(n).time > time) n--;
+}
+if (n == 0) t = 0; else t = time - key(n).time;
+if (n > 0 && t < 2) {
+  v = velocityAtTime(key(n).time - thisComp.frameDuration / 10);
+  value + v * amp * Math.sin(freq * t * 2 * Math.PI) / Math.exp(decay * t);
+} else {
+  value;
+}`,
+  layer:{ shape:'rect', size:140, keys:{ position:[[0.4,[400,540],'linear'],[1,[1500,540],'linear'],[3,[1500,540],'linear'],[3.6,[400,540],'linear']] } } },
+{ id:'phys-bounce', cat:'physics', name:'落地彈跳', sig:'重力 · 彈性係數', prop:'position',
+  desc:'依照落地瞬間的速度，計算一連串越來越小的彈跳，彈性 e 越接近 1 越彈。',
+  how:['在「位置」設兩個關鍵影格：空中 → 地面','第一段用加速（緩入）效果最好'], trail:true,
+  code:R`e = 0.6; // @彈性 0~0.95 0.01
+g = 6000; // @重力 1000~12000 100
+nMax = 8;
+n = 0;
+if (numKeys > 0) {
+  n = nearestKey(time).index;
+  if (key(n).time > time) n--;
+}
+if (n > 0) {
+  t = time - key(n).time;
+  v = -velocityAtTime(key(n).time - 0.001) * e;
+  vl = length(v);
+  vu = (vl > 0) ? normalize(v) : [0, 0];
+  tCur = 0; segDur = 2 * vl / g; tNext = segDur; nb = 1;
+  while (tNext < t && nb <= nMax) {
+    vl *= e; segDur *= e; tCur = tNext; tNext += segDur; nb++;
+  }
+  if (nb <= nMax) {
+    delta = t - tCur;
+    value + vu * delta * (vl - g * delta / 2);
+  } else value;
+} else value;`,
+  layer:{ shape:'circle', size:120, color:C.amber, keys:{ position:[[0.3,[960,160],'in'],[0.9,[960,860]]] } },
+  after:[{ name:'地面', shape:'rect', size:[1400,10], color:C.grey, base:{ position:[960,925] } }] },
+{ id:'phys-velocity', cat:'physics', name:'依移動速度傾斜', sig:'transform.position.velocity', prop:'rotation',
+  desc:'velocity 是屬性每秒的變化量。把水平速度乘上係數當作旋轉，物體會在加速時傾斜、停下時回正。',
+  how:['套用在「旋轉」，讀取同圖層的位置速度'], trail:true,
+  code:R`k = 0.025; // @傾斜係數 -0.1~0.1 0.001
+transform.position.velocity[0] * k`,
+  layer:{ shape:'rect', size:[120,260], color:C.green, keys:{ position:[[0,[400,540]],[1.5,[1520,540]]] }, expr:{ position:'loopOut("pingpong")' } } },
+{ id:'phys-delay', cat:'physics', name:'時間延遲殘影', sig:'valueAtTime(time - 延遲)', prop:'position',
+  desc:'valueAtTime 取得屬性在其他時間的值。每個複本延遲一點，就形成拖尾、殘影的效果。',
+  how:['套用在「位置」後複製圖層，index 越大延遲越多'],
+  code:R`delay = 0.06; // @每層延遲秒數 0~0.3 0.005
+valueAtTime(time - (index - 1) * delay)`,
+  layer:{ shape:'circle', size:90, color:C.coral, keys:{ position:[[0,[300,300]],[1,[1600,400]],[2,[900,850]],[3,[300,300]],[4,[1600,800]],[5,[700,250]],[6,[300,300]]] } }, dup:{ n:8, layout:'same' } },
+{ id:'phys-keyinfo', cat:'physics', name:'讀取關鍵影格資訊', sig:'numKeys · key(n).time · nearestKey()', prop:'sourceText',
+  desc:'用文字顯示另一個圖層位置屬性的關鍵影格數量、最近的關鍵影格與其時間，適合了解 key() 的回傳內容。',
+  how:['在文字圖層的「來源文字」套用'],
+  code:R`p = thisComp.layer("球").transform.position;
+n = p.nearestKey(time).index;
+"關鍵影格數：" + p.numKeys +
+"\r最近的是第 " + n + " 個" +
+"\r時間：" + p.key(n).time.toFixed(2) + " 秒"`,
+  layer:{ shape:'text', fontSize:72, base:{ position:[960,300] } },
+  after:[{ name:'球', shape:'circle', size:100, color:C.amber, keys:{ position:[[0.5,[400,800]],[2,[960,700]],[3.5,[1520,800]],[5,[960,900]]] } }] },
+
+// ---------------- 圖層 ----------------
+{ id:'layer-chain', cat:'layers', name:'跟隨領頭圖層（貪食蛇）', sig:'thisComp.layer(1).position.valueAtTime()', prop:'position',
+  desc:'每個複本讀取第 1 個圖層過去某個時間的位置，延遲隨 index 遞增，串成一條跟隨的隊伍。',
+  how:['第 1 層是領頭（自己有動畫）','在跟隨圖層的「位置」套用後大量複製'],
+  code:R`delay = 0.08; // @間隔秒數 0~0.3 0.005
+leader = thisComp.layer(1);
+leader.transform.position.valueAtTime(time - (index - 1) * delay)`,
+  before:[{ name:'領頭', shape:'circle', size:110, color:C.coral, expr:{ position:'[960 + Math.cos(time * 1.6) * 600, 540 + Math.sin(time * 2.4) * 300]' } }],
+  layer:{ shape:'circle', size:70, color:C.blue }, dup:{ n:14, layout:'same' } },
+{ id:'layer-radial', cat:'layers', name:'用 index 排成圓環', sig:'(index - 1) / thisComp.numLayers', prop:'position',
+  desc:'index 是圖層在時間軸上的編號。用它算出每個圖層的角度，複製後會自動平均分佈在圓上。',
+  how:['套用在「位置」後複製任意數量，圖層數改變會自動重新排列'],
+  code:R`radius = 340; // @半徑 0~500 1
+spin = 0.3; // @旋轉速度 -2~2 0.05
+n = thisComp.numLayers;
+a = (index - 1) / n * Math.PI * 2 + time * spin * Math.PI * 2;
+[960, 540] + [Math.cos(a), Math.sin(a)] * radius`,
+  layer:{ shape:'circle', size:80, color:C.violet }, dup:{ n:12, layout:'same' } },
+{ id:'layer-fan', cat:'layers', name:'用 index 展開扇形', sig:'(index - 1) * 角度', prop:'rotation',
+  desc:'每個圖層的旋轉角度比前一個多一點，配合偏移的錨點展開成扇形或花瓣，再加上 sin 讓它呼吸。',
+  how:['套用在「旋轉」，錨點放在圖形底端'],
+  code:R`step = 30; // @每層角度 0~60 1
+breathe = 12; // @呼吸幅度 0~45 1
+(index - 1) * step + Math.sin(time * 2) * breathe * index / 4`,
+  layer:{ shape:'rect', size:[70,340], color:C.amber, base:{ position:[960,560], anchorPoint:[0,160] } }, dup:{ n:12, layout:'same' } },
+{ id:'layer-distance', cat:'layers', name:'依距離縮放（網格）', sig:'length(a, b)', prop:'scale',
+  desc:'length 算出兩點距離。每個格子依照與「控制點」的距離決定大小，控制點移動時形成波紋般的放大效果。',
+  how:['建立一個名為「控制點」的空物件並做動畫','在網格圖層的「縮放」套用'],
+  code:R`radius = 500; // @影響半徑 100~1000 10
+maxS = 160; // @最大縮放 50~300 1
+minS = 20; // @最小縮放 0~100 1
+d = length(position, thisComp.layer("控制點").transform.position);
+s = linear(d, 0, radius, maxS, minS);
+[s, s]`,
+  before:[{ name:'控制點', shape:'null', size:70, color:C.coral, expr:{ position:'[960 + Math.sin(time * 1.3) * 650, 540 + Math.cos(time * 0.9) * 280]' } }],
+  layer:{ shape:'rect', size:90, color:C.blue }, dup:{ n:40, layout:'grid', cols:8, rows:5 } },
+{ id:'layer-lookat', cat:'layers', name:'朝向目標旋轉', sig:'Math.atan2(dy, dx)', prop:'rotation',
+  desc:'用兩點的差算出方向角度，所有箭頭都會指向移動中的「目標」。atan2 回傳弧度，要轉成角度。',
+  how:['在箭頭圖層的「旋轉」套用','箭頭圖形預設朝右（0 度）'],
+  code:R`target = thisComp.layer("目標").transform.position;
+v = target - position;
+radiansToDegrees(Math.atan2(v[1], v[0]))`,
+  before:[{ name:'目標', shape:'circle', size:80, color:C.amber, expr:{ position:'[960 + Math.cos(time) * 500, 540 + Math.sin(time * 1.7) * 300]' } }],
+  layer:{ shape:'arrow', size:90, color:C.white }, dup:{ n:35, layout:'grid', cols:7, rows:5 } },
+{ id:'layer-pickwhip', cat:'layers', name:'連結其他圖層屬性', sig:'thisComp.layer("名稱").transform.rotation', prop:'rotation',
+  desc:'用螺旋圖示（Pick Whip）拖到另一個屬性，AE 會自動產生這種引用。再乘上倍率就能做齒輪連動。',
+  how:['按住表達式的螺旋圖示，拖到「主齒輪」的旋轉','在後面加上 * 倍率'],
+  code:R`ratio = -2; // @倍率 -4~4 0.1
+thisComp.layer("主齒輪").transform.rotation * ratio`,
+  before:[{ name:'主齒輪', shape:'star', size:300, color:C.grey, base:{ position:[700,540] }, expr:{ rotation:'time * 40' } }],
+  layer:{ shape:'star', size:160, color:C.amber, base:{ position:[1080,400] } } },
+
+// ---------------- 控制效果 ----------------
+{ id:'ctrl-slider', cat:'controls', name:'滑桿控制', sig:'effect("Slider Control")("Slider")', prop:'rotation',
+  desc:'在圖層加上「效果 › 表達式控制 › 滑桿控制」，表達式讀取它的數值。之後只要拖滑桿，不用改程式碼。',
+  how:['效果與預設集 → 表達式控制 → 滑桿控制','中文版名稱為「滑桿控制」與「滑桿」，表達式中的名稱要與面板一致'],
+  tip:'下方「效果控制」面板可以直接拖動試試。',
+  code:R`speed = effect("Slider Control")("Slider");
+time * speed`,
+  layer:{ shape:'rect', size:220, color:C.blue, effects:[{ name:'Slider Control', alias:'滑桿控制', params:[{ name:'Slider', alias:'滑桿', type:'slider', v:120, min:-360, max:360 }] }] } },
+{ id:'ctrl-checkbox', cat:'controls', name:'核取方塊開關', sig:'effect("Checkbox Control")("Checkbox") == 1', prop:'position',
+  desc:'核取方塊勾選時值為 1，未勾選為 0。用 if 或三元運算子切換兩種行為。',
+  how:['效果 → 表達式控制 → 核取方塊控制'], trail:true,
+  code:R`on = effect("Checkbox Control")("Checkbox");
+on == 1 ? wiggle(3, 200) : value`,
+  layer:{ shape:'circle', size:130, color:C.green, effects:[{ name:'Checkbox Control', alias:'核取方塊控制', params:[{ name:'Checkbox', alias:'核取方塊', type:'checkbox', v:1 }] }] } },
+{ id:'ctrl-color', cat:'controls', name:'顏色控制', sig:'effect("Color Control")("Color")', prop:'color',
+  desc:'色彩控制讓多個圖層共用同一個顏色來源。常見做法是把它放在一個「控制」空物件上，再讓所有圖層引用。',
+  how:['套用在形狀圖層 › 內容 › 填色 › 顏色'],
+  code:R`effect("Color Control")("Color")`,
+  layer:{ shape:'star', size:340, effects:[{ name:'Color Control', alias:'色彩控制', params:[{ name:'Color', alias:'色彩', type:'color', v:[0.96,0.45,0.3,1] }] }] } },
+{ id:'ctrl-combo', cat:'controls', name:'點控制 + 滑桿組合', sig:'Point Control · Slider Control', prop:'position',
+  desc:'點控制提供 [x, y] 座標當作基準位置，滑桿控制晃動幅度。把常改的數值都做成控制項，就是一個可重複使用的範本。',
+  how:['加上「點控制」與「滑桿控制」兩個效果','在「位置」套用'], trail:true,
+  code:R`base = effect("Point Control")("Point");
+amp = effect("Slider Control")("Slider");
+base + wiggle(2, amp) - value`,
+  layer:{ shape:'rect', size:130, color:C.violet, effects:[
+    { name:'Point Control', alias:'點控制', params:[{ name:'Point', alias:'點', type:'point', v:[960,540] }] },
+    { name:'Slider Control', alias:'滑桿控制', params:[{ name:'Slider', alias:'滑桿', type:'slider', v:80, min:0, max:400 }] } ] } },
+{ id:'ctrl-angle', cat:'controls', name:'角度控制', sig:'effect("Angle Control")("Angle")', prop:'rotation',
+  desc:'角度控制提供轉盤式的角度輸入。這裡把它當作起始方向，再加上隨時間的擺動。',
+  how:['效果 → 表達式控制 → 角度控制'],
+  code:R`base = effect("Angle Control")("Angle");
+base + Math.sin(time * 3) * 20`,
+  layer:{ shape:'arrow', size:360, color:C.amber, effects:[{ name:'Angle Control', alias:'角度控制', params:[{ name:'Angle', alias:'角度', type:'angle', v:-45 }] }] } },
+
+// ---------------- 文字 ----------------
+{ id:'text-counter', cat:'text', name:'數字計數器', sig:'Math.round(linear(time, …))', prop:'sourceText',
+  desc:'讓數字從 0 跑到目標值，結尾加上單位。Math.round 去掉小數，或用 toFixed(1) 保留一位。',
+  how:['建立文字圖層 → 文字 › 來源文字 → 套用'],
+  code:R`target = 100; // @目標數字 1~1000 1
+dur = 3; // @秒數 0.5~6 0.1
+n = linear(time, 0, dur, 0, target);
+Math.round(n) + "%"`,
+  layer:{ shape:'text', fontSize:220, color:C.amber } },
+{ id:'text-comma', cat:'text', name:'千分位逗號', sig:'.replace(/\\B(?=(\\d{3})+(?!\\d))/g, ",")', prop:'sourceText',
+  desc:'用正規表達式每三位數插入逗號，適合金額、人數、觀看次數等大數字動畫。',
+  how:['在「來源文字」套用'],
+  code:R`target = 1280000; // @目標數字 1000~9999999 1000
+n = Math.round(ease(time, 0, 4, 0, target));
+"NT$ " + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")`,
+  layer:{ shape:'text', fontSize:150, color:C.green } },
+{ id:'text-typewriter', cat:'text', name:'打字機效果', sig:'txt.substr(0, 字數)', prop:'sourceText',
+  desc:'依照時間決定顯示幾個字，再加上閃爍的游標。中文字也能正常逐字出現。',
+  how:['在「來源文字」套用','可把文字改成你需要的句子'],
+  code:R`txt = "表達式讓動畫自己動起來";
+speed = 6; // @每秒字數 1~20 1
+n = Math.floor(time * speed);
+cursor = (Math.floor(time * 2) % 2 == 0) ? "|" : " ";
+txt.substr(0, n) + cursor`,
+  layer:{ shape:'text', fontSize:96 } },
+{ id:'text-countdown', cat:'text', name:'倒數計時 mm:ss', sig:'Math.floor(t / 60) · t % 60', prop:'sourceText',
+  desc:'把剩餘秒數拆成分與秒，不足兩位數補 0。改 total 就能設定起始時間。',
+  how:['在「來源文字」套用'],
+  code:R`total = 90; // @起始秒數 10~600 1
+t = Math.max(0, total - time * 10);
+m = Math.floor(t / 60);
+s = Math.floor(t % 60);
+(m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s`,
+  layer:{ shape:'text', fontSize:240, color:C.coral } },
+{ id:'text-scramble', cat:'text', name:'亂碼解碼', sig:'random() + for 迴圈', prop:'sourceText',
+  desc:'還沒「解碼」的字元每格隨機換成亂碼，已解碼的顯示正確文字，像駭客電影的文字特效。',
+  how:['在「來源文字」套用'],
+  code:R`txt = "AFTER EFFECTS";
+chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&";
+speed = 4; // @每秒解碼字數 1~15 1
+done = Math.floor(time * speed);
+out = "";
+for (i = 0; i < txt.length; i++) {
+  if (i < done || txt[i] == " ") out += txt[i];
+  else out += chars[Math.floor(random(chars.length))];
+}
+out`,
+  layer:{ shape:'text', fontSize:130, color:C.green } },
+{ id:'text-coords', cat:'text', name:'顯示其他圖層座標', sig:'p[0].toFixed(0)', prop:'sourceText',
+  desc:'讀取另一個圖層的位置並格式化成文字，toFixed(n) 指定小數位數。做 HUD、資訊圖表標籤很實用。',
+  how:['在「來源文字」套用'],
+  code:R`p = thisComp.layer("球").transform.position;
+"X " + p[0].toFixed(0) + "   Y " + p[1].toFixed(0)`,
+  layer:{ shape:'text', fontSize:80, base:{ position:[960,160] } },
+  after:[{ name:'球', shape:'circle', size:100, color:C.amber, expr:{ position:'wiggle(1, 400)' } }] },
+
+{ id:'text-bounce', cat:'text', name:'逐字彈跳出現', sig:'textIndex · 表達式選取器', prop:'amount',
+  desc:'每個字依序彈出：先放大衝過頭、再縮回、最後停在原本大小。用 textIndex 讓每個字的開始時間往後延，就會一個接一個出現。',
+  how:['文字圖層 › 動畫 › 縮放，把動畫製作工具裡的「縮放」設成 0%','刪掉「範圍選取器」，按「新增 › 選取器 › 表達式」','展開表達式選取器，在「數量」套用這段表達式'],
+  tip:'數量 100 代表完全套用動畫製作工具（縮放 0%，看不到），0 代表不影響（原本大小）。所以從 100 往 0 衰減震盪，字就會從無到有彈出來，負數時則會超過原本大小。',
+  code:R`delay = 0.05; // @每字延遲秒數 0~0.2 0.005
+freq = 2.1; // @回彈頻率 0.5~5 0.1
+decay = 8; // @停下速度 1~15 0.5
+t = time - inPoint - (textIndex - 1) * delay;
+if (t < 0) {
+  [100, 100];
+} else {
+  s = 100 * Math.cos(freq * t * 2 * Math.PI) / Math.exp(decay * t);
+  [s, s];
+}`,
+  layer:{ shape:'animtext', text:'AFTER EFFECTS', fontSize:150, color:C.white, animScale:0 } },
+
+// ---------------- 顏色 ----------------
+{ id:'color-rainbow', cat:'color', name:'彩虹循環', sig:'hslToRgb([色相, 飽和, 亮度, 1])', prop:'color',
+  desc:'HSL 的色相 0~1 繞色環一圈。讓色相隨時間增加並取 % 1，就能無限循環彩虹色。',
+  how:['套用在 內容 › 填色 › 顏色'],
+  code:R`speed = 0.2; // @每秒繞色環 0~1 0.01
+sat = 0.8; // @飽和度 0~1 0.01
+light = 0.55; // @亮度 0~1 0.01
+hslToRgb([(time * speed) % 1, sat, light, 1])`,
+  layer:{ shape:'circle', size:360 } },
+{ id:'color-blend', cat:'color', name:'兩色漸變', sig:'linear(t, …, 顏色1, 顏色2)', prop:'color',
+  desc:'linear 也能直接插值陣列，所以兩個顏色之間可以平滑過渡。顏色每個值都是 0~1。',
+  how:['套用在 填色 › 顏色'],
+  code:R`dur = 3; // @過渡秒數 0.5~6 0.1
+c1 = [0.95, 0.35, 0.3, 1];
+c2 = [0.25, 0.55, 0.98, 1];
+t = (time % (dur * 2));
+t < dur ? linear(t, 0, dur, c1, c2) : linear(t, dur, dur * 2, c2, c1)`,
+  layer:{ shape:'rect', size:340 } },
+{ id:'color-hex', cat:'color', name:'使用色碼', sig:'hexToRgb("#FF5A36")', prop:'color',
+  desc:'hexToRgb 把設計稿上常見的色碼轉成 AE 顏色陣列，方便對照品牌色。',
+  how:['套用在 填色 › 顏色'],
+  code:R`rate = 1; // @每秒切換 0.2~6 0.1
+on = Math.floor(time * rate) % 2 == 0;
+on ? hexToRgb("#FF5A36") : hexToRgb("#2E86DE")`,
+  layer:{ shape:'star', size:340 } },
+{ id:'color-index', cat:'color', name:'依 index 分配顏色', sig:'(index - 1) / numLayers', prop:'color',
+  desc:'每個複本依照 index 取色環上不同位置，自動得到一組協調的漸層配色。',
+  how:['套用在填色後複製多個圖層'],
+  code:R`flow = 0.1; // @色彩流動速度 0~1 0.01
+h = ((index - 1) / thisComp.numLayers + time * flow) % 1;
+hslToRgb([h, 0.75, 0.58, 1])`,
+  layer:{ shape:'rect', size:[150,520] }, dup:{ n:10, layout:'row' } },
+
+// ---------------- 路徑 ----------------
+{ id:'path-polygon', cat:'path', name:'正多邊形', sig:'createPath(points, [], [], true)', prop:'path',
+  desc:'用迴圈算出每個頂點的座標，交給 createPath 建立封閉路徑。改邊數就能從三角形變到圓形。',
+  how:['形狀圖層 › 內容 › 路徑 1 › 路徑 → 套用','座標是相對於圖層中心'],
+  code:R`sides = 6; // @邊數 3~16 1
+r = 260; // @半徑 50~450 1
+pts = [];
+for (i = 0; i < sides; i++) {
+  a = i / sides * Math.PI * 2 - Math.PI / 2;
+  pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+}
+createPath(pts, [], [], true)`,
+  layer:{ shape:'path', color:C.blue } },
+{ id:'path-wave', cat:'path', name:'流動正弦波', sig:'createPath(points, [], [], false)', prop:'path',
+  desc:'沿 X 方向取很多點，Y 用 sin 加上時間，就是一條會流動的波浪線。最後一個參數 false 代表不封閉。',
+  how:['套用在路徑，並在形狀圖層加上「筆畫」'],
+  code:R`amp = 160; // @振幅 0~400 1
+waves = 2; // @波數 0.5~6 0.5
+speed = 4; // @流動速度 -10~10 0.5
+pts = [];
+for (i = 0; i <= 60; i++) {
+  x = i / 60 * 1500 - 750;
+  pts.push([x, Math.sin(i / 60 * Math.PI * 2 * waves + time * speed) * amp]);
+}
+createPath(pts, [], [], false)`,
+  layer:{ shape:'path', color:C.green, stroke:10 } },
+{ id:'path-star', cat:'path', name:'脈動星形', sig:'內外半徑交替', prop:'path',
+  desc:'奇數點用外半徑、偶數點用內半徑就是星形，讓內半徑隨時間變化就會一縮一放。',
+  how:['套用在路徑'],
+  code:R`points = 5; // @星角數 3~12 1
+outer = 300; // @外半徑 100~450 1
+inner = outer * (0.4 + Math.sin(time * 3) * 0.15);
+pts = [];
+for (i = 0; i < points * 2; i++) {
+  r = (i % 2 == 0) ? outer : inner;
+  a = i / (points * 2) * Math.PI * 2 - Math.PI / 2;
+  pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+}
+createPath(pts, [], [], true)`,
+  layer:{ shape:'path', color:C.amber } },
+
+{ id:'path-inertia', cat:'path', name:'形狀變化與慣性回彈', sig:'points(t) · createPath()', prop:'path',
+  desc:'路徑有關鍵影格從形狀 A 變成 B 時，在停下的瞬間讓每個頂點依照自己的進場速度衝過頭再回彈，形狀會像果凍一樣晃一下再定型。',
+  how:['在「路徑」上設兩個以上的關鍵影格（A 形狀 → B 形狀），建議用線性','對同一個「路徑」屬性套用表達式','位置、縮放、旋轉請用「關鍵影格與物理 › 慣性回彈」那一版'],
+  tip:'路徑不能直接做 value + 速度 的運算，所以這裡用 points() 取出每個頂點，各自算速度與回彈，再用 createPath() 組回去。需要 AE CC 2018 以上。',
+  code:R`amp = 0.1; // @回彈幅度 0~0.3 0.005
+freq = 1.8; // @回彈頻率 0.5~5 0.1
+decay = 5; // @停下速度 1~12 0.5
+n = 0;
+if (numKeys > 0) {
+  n = nearestKey(time).index;
+  if (key(n).time > time) n--;
+}
+t = (n == 0) ? 0 : time - key(n).time;
+if (n > 0 && t < 3) {
+  p = thisProperty;
+  dt = thisComp.frameDuration / 10;
+  tk = key(n).time;
+  before1 = p.points(tk - dt);
+  before2 = p.points(tk - dt * 2);
+  now = p.points();
+  k = amp * Math.sin(freq * t * 2 * Math.PI) / Math.exp(decay * t);
+  pts = [];
+  for (i = 0; i < now.length; i++) {
+    v = (before1[i] - before2[i]) / dt; // 這個頂點進場時的速度
+    pts.push(now[i] + v * k);
+  }
+  createPath(pts, p.inTangents(), p.outTangents(), p.isClosed());
+} else {
+  value;
+}`,
+  layer:{ shape:'path', color:C.coral, keys:{ path:[[0.5,SHAPE_A,'linear'],[0.8,SHAPE_B,'linear'],[3,SHAPE_B,'linear'],[3.3,SHAPE_A,'linear']] } } },
+
+// ---------------- 邏輯 ----------------
+{ id:'logic-if', cat:'logic', name:'if / else 依時間切換', sig:'if (條件) A; else B;', prop:'opacity',
+  desc:'在指定時間之前保持不動，之後開始閃爍。if / else 最後被執行的那一行就是結果。',
+  how:['套用在「不透明度」'],
+  code:R`start = 2; // @開始閃爍秒數 0~5 0.1
+rate = 3; // @每秒閃爍 0.5~10 0.5
+if (time < start) {
+  100;
+} else {
+  Math.sin(time * rate * Math.PI * 2) > 0 ? 100 : 15;
+}`,
+  layer:{ shape:'circle', size:280, color:C.coral } },
+{ id:'logic-marker', cat:'logic', name:'標記觸發動畫', sig:'marker.nearestKey(time)', prop:'scale',
+  desc:'在圖層上加標記（數字鍵盤 *），每經過一個標記就觸發一次彈跳。剪輯時只要移動標記，動畫就跟著走。',
+  how:['選圖層按數字鍵盤 * 新增標記','在「縮放」套用'],
+  code:R`amp = 60; // @彈跳幅度 0~150 1
+n = 0;
+if (marker.numKeys > 0) {
+  n = marker.nearestKey(time).index;
+  if (marker.key(n).time > time) n--;
+}
+if (n == 0) {
+  value;
+} else {
+  t = time - marker.key(n).time;
+  s = 100 + amp * Math.exp(-t * 6) * Math.cos(t * 22);
+  [s, s];
+}`,
+  layer:{ shape:'rect', size:240, color:C.violet, markers:[[1,'A'],[2.5,'B'],[3.2,'C'],[4.6,'D']] } },
+{ id:'logic-threshold', cat:'logic', name:'超過門檻變色', sig:'條件 ? 值1 : 值2', prop:'color',
+  desc:'三元運算子 a ? b : c 是一行版的 if。當圖層越過畫面中線時改變顏色。',
+  how:['套用在 填色 › 顏色'],
+  code:R`line = 960; // @門檻 X 0~1920 10
+transform.position[0] > line ? [0.95, 0.38, 0.33, 1] : [0.24, 0.61, 0.94, 1]`,
+  layer:{ shape:'rect', size:200, keys:{ position:[[0,[350,540]],[2,[1570,540]]] }, expr:{ position:'loopOut("pingpong")' } },
+  after:[{ name:'中線', shape:'rect', size:[6,700], color:C.grey }] },
+
+// ---------------- JS ----------------
+{ id:'js-math', cat:'js', name:'Math 函式對照', sig:'round · floor · ceil · abs', prop:'sourceText',
+  desc:'同一個數字經過不同 Math 函式的結果，一次看懂差別。',
+  how:['在文字圖層「來源文字」套用'],
+  code:R`v = time * 1.7;
+"v = " + v.toFixed(3) +
+"\rMath.round → " + Math.round(v) +
+"\rMath.floor → " + Math.floor(v) +
+"\rMath.ceil  → " + Math.ceil(v) +
+"\rMath.sin   → " + Math.sin(v).toFixed(3)`,
+  layer:{ shape:'text', fontSize:64 } },
+{ id:'js-array', cat:'js', name:'陣列與索引', sig:'arr[i] · arr.length', prop:'position',
+  desc:'把多個座標放在陣列裡，用 Math.floor(time) % 長度 依序取出，就能每秒跳到下一個位置。',
+  how:['套用在「位置」'], trail:true,
+  code:R`pts = [[400, 300], [1500, 300], [1500, 800], [400, 800]];
+rate = 1; // @每秒換幾個點 0.5~4 0.5
+i = Math.floor(time * rate) % pts.length;
+pts[i]`,
+  layer:{ shape:'rect', size:140, color:C.amber } },
+{ id:'js-loop', cat:'js', name:'for 迴圈累加', sig:'for (i = 0; i < n; i++)', prop:'sourceText',
+  desc:'迴圈重複執行同一段程式。這裡把 1 加到 n，並把每一項串成文字。',
+  how:['在「來源文字」套用'],
+  code:R`n = Math.floor(time * 1.5) + 1;
+sum = 0;
+list = [];
+for (i = 1; i <= n; i++) {
+  sum += i;
+  list.push(i);
+}
+list.join(" + ") + "\r= " + sum`,
+  layer:{ shape:'text', fontSize:72 } },
+{ id:'js-function', cat:'js', name:'自訂函式', sig:'function 名稱(參數) { return … }', prop:'position',
+  desc:'把重複的計算包成函式，傳入不同參數重複使用，讓表達式更好讀也更好改。',
+  how:['套用在「位置」'], trail:true,
+  code:R`function hop(t, h) {
+  return Math.abs(Math.sin(t * Math.PI)) * h;
+}
+height = 300; // @跳躍高度 0~600 1
+x = linear(time % 3, 0, 3, 300, 1620);
+[x, 820 - hop(time * 1.5, height)]`,
+  layer:{ shape:'circle', size:110, color:C.green } },
+
+// ---------------- 實驗室 ----------------
+{ id:'lab', cat:'lab', name:'空白實驗室', sig:'選擇屬性 → 自由撰寫', prop:'position', lab:true,
+  desc:'在這裡切換要套用的屬性，從頭寫任何表達式。所有內建函式都可以使用，結果會即時預覽。',
+  how:['上方選擇屬性','在數字變數後面加上 // @標籤 最小~最大 間距 即可產生滑桿'], trail:true,
+  code:R`amp = 200; // @幅度 0~500 1
+[value[0] + Math.sin(time * 2) * amp, value[1]]`,
+  layer:{ shape:'rect' } }
+];
+
+const LAB_STARTERS = {
+  position:R`amp = 200; // @幅度 0~500 1
+[value[0] + Math.sin(time * 2) * amp, value[1]]`,
+  scale:R`s = 100 + Math.sin(time * 4) * 30;
+[s, s]`,
+  rotation:R`speed = 60; // @速度 -360~360 1
+time * speed`,
+  opacity:R`50 + Math.sin(time * 3) * 50`,
+  color:R`hslToRgb([time * 0.15 % 1, 0.8, 0.55, 1])`,
+  sourceText:R`"Hello AE  " + time.toFixed(2)`,
+  path:R`r = 200 + Math.sin(time * 2) * 60;
+createPath([[-r, 0], [0, -r], [r, 0], [0, r]], [], [], true)`
+};
+
+// ---------- 場景建立 ----------
+function layoutPos(dup,i){
+  const n=dup.n, W=1920, H=1080;
+  switch(dup.layout){
+    case 'row': { const x0=dup.x0||200, x1=dup.x1||1720; return [n<2?960:x0+(x1-x0)*i/(n-1), dup.y||540]; }
+    case 'col': { const y0=dup.y0||240, y1=dup.y1||840; return [dup.x||960, n<2?540:y0+(y1-y0)*i/(n-1)]; }
+    case 'grid': { const c=dup.cols, r=dup.rows, cx=i%c, cy=Math.floor(i/c); const x0=260,x1=1660,y0=200,y1=880;
+      return [x0+(x1-x0)*cx/Math.max(1,c-1), y0+(y1-y0)*cy/Math.max(1,r-1)]; }
+    default: return null;
+  }
+}
+function buildScene(ex, code, propOverride){
+  const prop = propOverride || ex.prop;
+  const specs=[];
+  (ex.before||[]).forEach(s=>specs.push(Object.assign({},s)));
+  let main = Object.assign({}, ex.layer||{});
+  if(ex.lab){
+    main = { shape: prop==='sourceText'?'text' : prop==='path'?'path' : 'rect', color:[0.24,0.61,0.94] };
+  }
+  const isText = main.shape==='text' || main.shape==='animtext';
+  const baseName = isText ? '文字圖層' : (main.shape==='path'?'形狀圖層':'形狀圖層');
+  const dup = ex.dup || { n:1 };
+  for(let i=0;i<dup.n;i++){
+    const s = JSON.parse(JSON.stringify(main));
+    s.name = dup.names ? dup.names[i] : (baseName+' '+(i+1));
+    if(dup.colors) s.color = dup.colors[i];
+    s.user = true;
+    s.expr = Object.assign({}, s.expr||{}); s.expr[prop] = code;
+    const p = layoutPos(dup,i);
+    if(p){ s.base = Object.assign({}, s.base||{}); if(!(s.keys&&s.keys.position)) s.base.position = p; }
+    if(ex.labels) s.label = s.name;
+    if(s.effects && i>0) s.effects = main.effects; // 共用同一組控制
+    specs.push(s);
+  }
+  if(main.effects){ for(const sp of specs) if(sp.user) sp.effects = main.effects; }
+  (ex.after||[]).forEach(s=>specs.push(Object.assign({},s)));
+  return specs;
+}
+
+return { CATS, EX, LAB_STARTERS, buildScene };
+})();
+if(typeof module!=='undefined') module.exports=LIB;
+
+</script>
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const {CATS,EX,LAB_STARTERS,buildScene}=LIB;
+const COMP=AE.COMP;
+const store={ get(k,d){ try{ const v=localStorage.getItem('aeexpr:'+k); return v==null?d:JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ if(v==null) localStorage.removeItem('aeexpr:'+k); else localStorage.setItem('aeexpr:'+k,JSON.stringify(v)); }catch(e){} } };
+
+const S={ ex:null, saved:null, code:'', prop:'', scene:null, t:0, playing:!matchMedia('(prefers-reduced-motion: reduce)').matches,
+  speed:1, trail:true, dirty:true, graphDirty:true, graph:null, paramSig:'', closed:{}, savedList:store.get('saved',[]), labProp:store.get('labProp','position'), codes:store.get('codes',{}) };
+
+// ---------- 側欄 ----------
+function renderSide(){
+  const q=$('#search').value.trim().toLowerCase();
+  const side=$('#catList'); side.innerHTML='';
+  const match=e=>!q || (e.name+' '+e.sig+' '+e.desc+' '+e.code).toLowerCase().includes(q);
+  let total=0;
+  const groups=[];
+  if(S.savedList.length){ const items=S.savedList.filter(s=>!q||(s.name+' '+s.code).toLowerCase().includes(q)).map(s=>({saved:s})); if(items.length) groups.push({cat:{id:'mine',name:'我的表達式',en:'收藏的自訂版本'},items}); }
+  for(const c of CATS){ const items=EX.filter(e=>e.cat===c.id && match(e)).map(e=>({ex:e})); if(items.length) groups.push({cat:c,items}); }
+  for(const g of groups){
+    total+=g.items.length;
+    const isClosed = g.cat.id in S.closed ? S.closed[g.cat.id] : true; // 預設收起
+    const wrap=document.createElement('div'); wrap.className='cat'+(isClosed&&!q?' closed':'');
+    const h=document.createElement('button'); h.className='cat-h'; h.type='button'; h.setAttribute('aria-expanded',String(!wrap.classList.contains('closed')));
+    h.innerHTML='<svg class="chev" viewBox="0 0 12 12" fill="none" stroke-width="1.6"><path d="M3 4.5l3 3 3-3"/></svg><span class="nm"></span><span class="cnt"></span>';
+    h.querySelector('.nm').textContent=g.cat.name; h.querySelector('.cnt').textContent=g.items.length;
+    h.onclick=()=>{ const opening=wrap.classList.contains('closed');
+      if(opening){ // 手風琴：展開這一個時，其他分類全部收起
+        side.querySelectorAll('.cat').forEach(c=>{ c.classList.add('closed'); const hb=c.querySelector('.cat-h'); if(hb) hb.setAttribute('aria-expanded','false'); });
+        S.closed={}; groups.forEach(x=>S.closed[x.cat.id]=true); }
+      wrap.classList.toggle('closed',!opening); S.closed[g.cat.id]=!opening; h.setAttribute('aria-expanded',String(opening)); };
+    const en=document.createElement('span'); en.className='cat-en'; en.textContent=g.cat.en;
+    const list=document.createElement('div'); list.className='items';
+    for(const it of g.items){
+      const b=document.createElement('button'); b.type='button'; b.className='item';
+      const id=it.ex?it.ex.id:it.saved.id;
+      if((S.saved?S.saved.id:S.ex&&S.ex.id)===id) b.classList.add('on');
+      const t=document.createElement('span'); t.className='t'; t.textContent=it.ex?it.ex.name:it.saved.name;
+      const s=document.createElement('span'); s.className='s'; s.textContent=it.ex?it.ex.sig:(exById(it.saved.base)||{}).name||'';
+      b.append(t,s);
+      b.onclick=()=>{ go(id); setDrawer(false); };
+      if(it.saved){ const d=document.createElement('span'); d.className='del'; d.textContent='×'; d.title='刪除這個收藏'; d.setAttribute('role','button'); d.setAttribute('aria-label','刪除 '+it.saved.name);
+        d.onclick=(ev)=>{ ev.stopPropagation(); S.savedList=S.savedList.filter(x=>x.id!==it.saved.id); store.set('saved',S.savedList); Sync.dirty(); if(S.saved&&S.saved.id===it.saved.id) go(it.saved.base); else renderSide(); };
+        b.append(d); }
+      list.append(b);
+    }
+    wrap.append(h,en,list); side.append(wrap);
+  }
+  if(!total){ const e=document.createElement('div'); e.className='empty-search'; e.textContent='沒有符合「'+q+'」的表達式，試試 wiggle、loop、文字、顏色。'; side.append(e); }
+}
+const exById=id=>EX.find(e=>e.id===id);
+
+// ---------- 切換範例 ----------
+function go(id){ if(location.hash!=='#'+id){ location.hash=id; } else load(id); }
+function load(id){
+  let ex=exById(id), saved=null;
+  if(!ex){ saved=S.savedList.find(s=>s.id===id); ex=saved?exById(saved.base):null; }
+  if(!ex){ ex=EX[0]; saved=null; }
+  S.ex=ex; S.saved=saved;
+  S.prop = ex.lab ? (saved&&saved.prop || S.labProp) : ex.prop;
+  S.code = saved ? saved.code : (S.codes[ex.id+(ex.lab?':'+S.prop:'')] || (ex.lab? (S.prop==='position'?ex.code:LAB_STARTERS[S.prop]) : ex.code));
+  // 只展開目前觀看範例所在的分類，其餘全部收起（不記錄，重新開啟頁面即還原）
+  S.closed={}; S.closed[saved?'mine':ex.cat]=false;
+  rebuildScene();
+  $('#code').value=S.code;
+  renderDoc(); renderHL(); renderParams(true); renderEffects(); renderSide();
+  $('#trailTog').parentElement.style.display = ex.trail ? '' : 'none';
+  const lp=$('#labProp'); lp.hidden=!ex.lab; if(ex.lab) lp.value=S.prop;
+  $('#savebar').classList.remove('show');
+  S.t = Math.min(S.t, COMP.dur-1e-6); S.graphDirty=true; S.dirty=true; resizeAll();
+}
+function rebuildScene(){ S.scene=new AE.Scene(buildScene(S.ex,S.code,S.prop)); AE.setScene(S.scene); }
+function userLayers(){ return S.scene.userLayers(); }
+function defaultCode(){ return S.saved? S.saved.code : (S.ex.lab ? (S.prop==='position'?S.ex.code:LAB_STARTERS[S.prop]) : S.ex.code); }
+function codeKey(){ return S.ex.id+(S.ex.lab?':'+S.prop:''); }
+
+function setCode(code,fromEditor){
+  S.code=code;
+  for(const L of userLayers()) L.props[S.prop].expr=code;
+  if(!S.saved){ if(code===defaultCode()) delete S.codes[codeKey()]; else S.codes[codeKey()]=code; store.set('codes',S.codes); }
+  else { S.saved.code=code; store.set('saved',S.savedList); }
+  Sync.dirty();
+  if(!fromEditor){ const ta=$('#code'); const ss=ta.selectionStart, se=ta.selectionEnd; ta.value=code; try{ ta.setSelectionRange(ss,se); }catch(e){} }
+  renderHL(); renderParams(false); updateModChip();
+  S.graphDirty=true; S.dirty=true;
+}
+function updateModChip(){ const m=$('#modChip'); m.innerHTML=''; if(S.code!==defaultCode()){ m.innerHTML='<span class="chip mod">已修改</span>'; } }
+
+// ---------- 說明 ----------
+function renderDoc(){
+  const ex=S.ex, cat=CATS.find(c=>c.id===ex.cat);
+  const d=$('#doc'); d.innerHTML='';
+  const meta=document.createElement('div'); meta.className='meta';
+  meta.innerHTML='<span class="chip"></span><span class="chip expr"></span>';
+  meta.children[0].textContent=cat.name; meta.children[1].textContent='套用：'+AE.PROP_INFO[S.prop].label;
+  const h=document.createElement('h2'); h.textContent=S.saved?S.saved.name:ex.name;
+  const sig=document.createElement('code'); sig.className='sig'; sig.textContent=ex.sig;
+  const p=document.createElement('p'); p.textContent=ex.desc;
+  const more=document.createElement('div'); more.className='fold-body'; more.append(p);
+  d.append(meta,h,sig,more);
+  if(ex.how&&ex.how.length){ const ol=document.createElement('ol'); for(const s of ex.how){ const li=document.createElement('li'); li.textContent=s; ol.append(li); } more.append(ol); }
+  if(ex.tip){ const t=document.createElement('div'); t.className='tip'; t.textContent=ex.tip; more.append(t); }
+  const pc=$('#propChip'); pc.innerHTML='<span class="chip expr"></span>'; pc.firstChild.textContent=AE.PROP_INFO[S.prop].label;
+  updateModChip();
+}
+
+// ---------- 語法高亮 ----------
+const KW=new Set('if else for while do var let const function return true false null undefined new typeof instanceof break continue switch case default in of this'.split(' '));
+const AEF=new Set('wiggle random gaussRandom seedRandom noise linear ease easeIn easeOut clamp length normalize dot cross add sub mul div lookAt degreesToRadians radiansToDegrees timeToFrames framesToTime timeToTimecode timeToCurrentFormat hslToRgb rgbToHsl hexToRgb loopOut loopIn loopOutDuration loopInDuration key nearestKey valueAtTime velocityAtTime posterizeTime createPath effect toComp fromComp layer points inTangents outTangents isClosed'.split(' '));
+const AEV=new Set('time value index thisComp thisLayer thisProperty numKeys velocity speed inPoint outPoint marker transform position scale rotation opacity anchorPoint text sourceText textIndex textTotal Math'.split(' '));
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const TOK=/(\/\/[^\n]*)|("(?:[^"\\\n]|\\.)*"?|'(?:[^'\\\n]|\\.)*'?)|(\b\d*\.?\d+(?:e[+-]?\d+)?\b)|([A-Za-z_$][\w$]*)/g;
+function hlLine(line){
+  let out='', last=0, m; TOK.lastIndex=0;
+  while((m=TOK.exec(line))){ out+=esc(line.slice(last,m.index)); last=TOK.lastIndex;
+    if(m[1]){ const at=m[1].indexOf('@'); out+= at>=0 && /\/\/\s*@/.test(m[1]) ? '<span class="tk-c">'+esc(m[1].slice(0,at))+'</span><span class="tk-p">'+esc(m[1].slice(at))+'</span>' : '<span class="tk-c">'+esc(m[1])+'</span>'; }
+    else if(m[2]) out+='<span class="tk-s">'+esc(m[2])+'</span>';
+    else if(m[3]) out+='<span class="tk-n">'+m[3]+'</span>';
+    else { const w=m[4]; const cls=KW.has(w)?'tk-k':AEF.has(w)?'tk-f':AEV.has(w)?'tk-v':''; out+= cls?'<span class="'+cls+'">'+w+'</span>':w; }
+  }
+  return out+esc(line.slice(last));
+}
+let errLine=null;
+function renderSel(){
+  const ta=$('#code'), sel=$('#sel'); const a=ta.selectionStart, b=ta.selectionEnd;
+  if(document.activeElement!==ta || a===b){ if(sel.innerHTML) sel.innerHTML=''; return; }
+  const v=ta.value; sel.innerHTML=esc(v.slice(0,a))+'<mark>'+esc(v.slice(a,b))+'</mark>'+esc(v.slice(b))+'\n';
+}
+function renderHL(){
+  const lines=S.code.split('\n');
+  $('#hl').innerHTML=lines.map((l,i)=>'<span class="ln'+(errLine===i+1?' bad':'')+'">'+hlLine(l)+'</span>').join('\n')+'\n';
+}
+
+// ---------- 參數滑桿 ----------
+const PRE=/^(\s*(?:var\s+|let\s+|const\s+)?([A-Za-z_$][\w$]*)\s*=\s*)(-?\d*\.?\d+)(\s*;?\s*\/\/\s*@\s*(\S+)\s+(-?\d*\.?\d+)\s*~\s*(-?\d*\.?\d+)(?:\s+(\d*\.?\d+))?.*)$/;
+function parseParams(code){ const out=[]; code.split('\n').forEach((l,i)=>{ const m=l.match(PRE); if(m) out.push({line:i,name:m[2],val:+m[3],label:m[5],min:+m[6],max:+m[7],step:m[8]?+m[8]:((+m[7]-+m[6])/100)}); }); return out; }
+function decimals(step){ const s=String(step); const i=s.indexOf('.'); return i<0?0:s.length-i-1; }
+let dragging=null;
+function renderParams(force){
+  const ps=parseParams(S.code); const sig=ps.map(p=>p.name+p.label+p.min+p.max+p.step).join('|');
+  const box=$('#params');
+  if(!force && sig===S.paramSig){ ps.forEach((p,i)=>{ const row=box.children[i]; if(!row||row===dragging) return; const r=row.querySelector('input[type=range]'), n=row.querySelector('input[type=number]'); r.value=p.val; if(document.activeElement!==n) n.value=p.val; }); return; }
+  S.paramSig=sig; box.innerHTML='';
+  if(!ps.length){ box.innerHTML='<div class="hint">這個表達式沒有可調參數。在數值變數那一行結尾加上註解 <code>// @標籤 最小~最大 間距</code> 就會出現滑桿，例如<br><code>amp = 50; // @幅度 0~200 1</code></div>'; return; }
+  ps.forEach((p,i)=>{
+    const row=document.createElement('div'); row.className='prow';
+    const id='pr-'+i;
+    row.innerHTML='<label for="'+id+'"></label><input type="range" id="'+id+'"><input type="number" aria-label="">';
+    const lab=row.querySelector('label'); lab.textContent=p.label; const sm=document.createElement('small'); sm.textContent=p.name; lab.append(sm);
+    const r=row.children[1], n=row.children[2]; n.setAttribute('aria-label',p.label+' 數值');
+    for(const el of [r,n]){ el.min=p.min; el.max=p.max; el.step=p.step; el.value=p.val; }
+    const apply=(v)=>{ v=+v; if(isNaN(v)) return; const cur=parseParams(S.code)[i]; if(!cur) return;
+      const lines=S.code.split('\n'); lines[cur.line]=lines[cur.line].replace(PRE,(all,a,nm,num,rest)=>a+v.toFixed(decimals(p.step)).replace(/^-0$/,'0')+rest);
+      setCode(lines.join('\n')); };
+    r.addEventListener('input',()=>{ dragging=row; n.value=r.value; apply(r.value); });
+    r.addEventListener('change',()=>{ dragging=null; });
+    n.addEventListener('input',()=>{ if(n.value!=='') { r.value=n.value; apply(n.value); } });
+    box.append(row);
+  });
+}
+
+// ---------- 效果控制 ----------
+function renderEffects(){
+  const L=userLayers()[0]; const fxs=L?L.effects:[]; const panel=$('#fxPanel'), box=$('#fx');
+  panel.hidden=!fxs.length; box.innerHTML='';
+  fxs.forEach((fx,fi)=>{
+    const f=document.createElement('div'); f.className='fx';
+    f.innerHTML='<div class="fx-h"><span class="fxb">fx</span><span></span></div><div class="pb"></div>';
+    f.querySelector('.fx-h span:last-child').textContent=fx.name+(fx.alias?'（'+fx.alias+'）':'');
+    const pb=f.querySelector('.pb');
+    fx.params.forEach((p,pi)=>{
+      const row=document.createElement('div'); row.className='prow'; const id='fx-'+fi+'-'+pi;
+      const lab=document.createElement('label'); lab.htmlFor=id; lab.textContent=p.name; if(p.alias){ const s=document.createElement('small'); s.textContent=p.alias; lab.append(s); }
+      row.append(lab);
+      const changed=()=>{ S.graphDirty=true; S.dirty=true; };
+      if(p.type==='slider'||p.type==='angle'){
+        const r=document.createElement('input'); r.type='range'; r.id=id; r.min=p.type==='angle'?-180:p.min; r.max=p.type==='angle'?180:p.max; r.step=p.type==='angle'?1:((p.max-p.min)/200);
+        const n=document.createElement('input'); n.type='number'; n.setAttribute('aria-label',p.name+' 數值'); r.value=n.value=p.v;
+        r.oninput=()=>{ p.v=+r.value; n.value=p.v; changed(); }; n.oninput=()=>{ if(n.value!==''){ p.v=+n.value; r.value=p.v; changed(); } };
+        row.append(r,n);
+      } else if(p.type==='checkbox'){
+        const c=document.createElement('input'); c.type='checkbox'; c.id=id; c.checked=!!p.v; c.style.justifySelf='start'; c.style.width='18px'; c.style.height='18px'; c.style.accentColor='var(--expr)';
+        const n=document.createElement('span'); n.className='mono'; n.style.color='var(--muted)'; n.textContent=p.v?'= 1':'= 0';
+        c.onchange=()=>{ p.v=c.checked?1:0; n.textContent='= '+p.v; changed(); }; row.append(c,n);
+      } else if(p.type==='color'){
+        const c=document.createElement('input'); c.type='color'; c.id=id; c.value=toHex(p.v);
+        const n=document.createElement('span'); n.className='mono'; n.style.cssText='color:var(--muted);font-size:11px'; const lbl=()=>n.textContent='['+p.v.slice(0,3).map(x=>x.toFixed(2)).join(', ')+', 1]';
+        lbl(); c.oninput=()=>{ const h=c.value; p.v=[parseInt(h.substr(1,2),16)/255,parseInt(h.substr(3,2),16)/255,parseInt(h.substr(5,2),16)/255,1]; lbl(); changed(); };
+        row.style.gridTemplateColumns='96px 64px 1fr'; row.append(c,n);
+      } else if(p.type==='point'){
+        const w=document.createElement('div'); w.className='pt'; row.style.gridTemplateColumns='96px 1fr';
+        [0,1].forEach(k=>{ const n=document.createElement('input'); n.type='number'; n.id=k?id+'y':id; n.setAttribute('aria-label',(k?'Y':'X')); n.value=p.v[k]; n.step=10; n.oninput=()=>{ if(n.value!==''){ p.v[k]=+n.value; changed(); } }; w.append(n); });
+        row.append(w);
+      }
+      pb.append(row);
+    });
+    box.append(f);
+  });
+}
+function toHex(c){ return '#'+c.slice(0,3).map(x=>Math.round(Math.min(1,Math.max(0,x))*255).toString(16).padStart(2,'0')).join(''); }
+
+// ---------- 繪圖 ----------
+const comp=$('#comp'), cx=comp.getContext('2d');
+const tl=$('#tl'), tx=tl.getContext('2d');
+const gr=$('#graph'), gx=gr.getContext('2d');
+let DPR=1;
+function fitCanvas(c,h){ const w=c.clientWidth||300; c.width=Math.round(w*DPR); c.height=Math.round((h||c.clientHeight)*DPR); if(h) c.style.height=h+'px'; }
+function resizeAll(){ DPR=Math.min(2,window.devicePixelRatio||1);
+  const w=comp.clientWidth||600; comp.width=Math.round(w*DPR); comp.height=Math.round(w*9/16*DPR);
+  fitCanvas(tl,tlHeight()); fitCanvas(gr,170); S.graphDirty=true; S.dirty=true; }
+const rgba=(c,a)=>'rgba('+[0,1,2].map(i=>Math.round(Math.min(1,Math.max(0,c[i]))*255)).join(',')+','+Math.min(1,Math.max(0,(c[3]==null?1:c[3])*(a==null?1:a)))+')';
+
+function shapePath(ctx,shape,w,h){
+  ctx.beginPath();
+  if(shape==='circle'){ ctx.ellipse(0,0,w/2,h/2,0,0,Math.PI*2); }
+  else if(shape==='star'){ const n=shape==='star'?8:5; const R=w/2, r=w/2*0.72; for(let i=0;i<n*2;i++){ const a=i/(n*2)*Math.PI*2-Math.PI/2, rr=i%2?r:R; i?ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):ctx.moveTo(Math.cos(a)*rr,Math.sin(a)*rr); } ctx.closePath(); }
+  else if(shape==='arrow'){ const L=w/2; ctx.moveTo(-L,-h*0.12); ctx.lineTo(L*0.25,-h*0.12); ctx.lineTo(L*0.25,-h*0.32); ctx.lineTo(L,0); ctx.lineTo(L*0.25,h*0.32); ctx.lineTo(L*0.25,h*0.12); ctx.lineTo(-L,h*0.12); ctx.closePath(); }
+  else { const rr=Math.min(w,h)*0.12; if(ctx.roundRect) ctx.roundRect(-w/2,-h/2,w,h,rr); else ctx.rect(-w/2,-h/2,w,h); }
+}
+function drawPathValue(ctx,p,color,stroke){
+  const P=p.points; if(!P||!P.length) return;
+  ctx.beginPath(); ctx.moveTo(P[0][0],P[0][1]);
+  const seg=(i,j)=>{ const o=p.outTangents[i]||[0,0], n=p.inTangents[j]||[0,0];
+    if(!o[0]&&!o[1]&&!n[0]&&!n[1]) ctx.lineTo(P[j][0],P[j][1]); else ctx.bezierCurveTo(P[i][0]+o[0],P[i][1]+o[1],P[j][0]+n[0],P[j][1]+n[1],P[j][0],P[j][1]); };
+  for(let i=0;i<P.length-1;i++) seg(i,i+1);
+  if(p.closed){ seg(P.length-1,0); ctx.closePath(); }
+  if(p.closed && !stroke){ ctx.fillStyle=rgba(color); ctx.fill(); ctx.lineWidth=4; ctx.strokeStyle=rgba([1,1,1,0.25]); ctx.stroke(); }
+  else { ctx.lineWidth=stroke||8; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.strokeStyle=rgba(color); ctx.stroke(); }
+}
+const ev=(L,k,t)=>AE.evalProp(L.props[k],t);
+function drawLayer(ctx,L,t){
+  if(t<L.inPoint||t>=L.outPoint) return;
+  const pos=ev(L,'position',t), sc=ev(L,'scale',t), rot=ev(L,'rotation',t), op=ev(L,'opacity',t), an=ev(L,'anchorPoint',t), col=ev(L,'color',t);
+  const w=Array.isArray(L.size)?L.size[0]:L.size, h=Array.isArray(L.size)?L.size[1]:L.size;
+  ctx.save(); ctx.globalAlpha=Math.min(1,Math.max(0,op/100));
+  ctx.translate(pos[0],pos[1]); ctx.rotate(rot*Math.PI/180); ctx.scale(sc[0]/100,sc[1]/100); ctx.translate(-an[0],-an[1]);
+  if(L.shape==='animtext'){
+    const chars=Array.from(L.spec.text||''); const n=chars.length;
+    ctx.font='700 '+L.fontSize+'px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.fillStyle=rgba(col);
+    const ws=chars.map(c=>ctx.measureText(c).width); const tot=ws.reduce((a,b)=>a+b,0); let x=-tot/2; const base=L.fontSize*0.36;
+    chars.forEach((c,i)=>{ const a=AE.evalProp(L.props.amount,t,{textIndex:i+1,textTotal:n}); const k=L.animScale;
+      const fx=(100+(k-100)*a[0]/100)/100, fy=(100+(k-100)*a[1]/100)/100; const cxp=x+ws[i]/2;
+      if(c!==' '){ ctx.save(); ctx.translate(cxp,base); ctx.scale(fx,fy); ctx.fillText(c,0,0); ctx.restore(); }
+      x+=ws[i]; });
+  } else if(L.shape==='text'){
+    const s=String(ev(L,'sourceText',t)); const lines=s.split(/\r\n|\r|\n/);
+    ctx.font='700 '+L.fontSize+'px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=rgba(col);
+    const lh=L.fontSize*1.25; lines.forEach((ln,i)=>ctx.fillText(ln,0,(i-(lines.length-1)/2)*lh));
+  } else if(L.shape==='path'){ drawPathValue(ctx,ev(L,'path',t),col,L.stroke); }
+  else if(L.shape==='null'){ ctx.strokeStyle=rgba(col); ctx.lineWidth=4; ctx.strokeRect(-w/2,-w/2,w,w); ctx.beginPath(); ctx.moveTo(-w*0.8,0); ctx.lineTo(w*0.8,0); ctx.moveTo(0,-w*0.8); ctx.lineTo(0,w*0.8); ctx.stroke(); }
+  else if(L.shape==='frame'){ ctx.setLineDash([16,12]); ctx.strokeStyle=rgba(col); ctx.lineWidth=4; ctx.strokeRect(-w/2,-h/2,w,h); ctx.setLineDash([]); }
+  else { shapePath(ctx,L.shape,w,h); ctx.fillStyle=rgba(col); ctx.fill(); }
+  ctx.restore();
+  if(L.label){ ctx.save(); ctx.font='600 30px "JetBrains Mono",monospace'; ctx.fillStyle='#8d939c'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(L.label,40,pos[1]); ctx.restore(); }
+}
+function drawComp(){
+  const W=comp.width, H=comp.height, k=W/COMP.w;
+  cx.setTransform(1,0,0,1,0,0); cx.fillStyle='#0c0d0f'; cx.fillRect(0,0,W,H);
+  cx.setTransform(k,0,0,k,0,0);
+  // 背景格線
+  cx.strokeStyle='#1b1d21'; cx.lineWidth=2;
+  cx.beginPath(); for(let x=0;x<=COMP.w;x+=120){ cx.moveTo(x,0); cx.lineTo(x,COMP.h); } for(let y=0;y<=COMP.h;y+=120){ cx.moveTo(0,y); cx.lineTo(COMP.w,y); } cx.stroke();
+  cx.strokeStyle='#2a2d33'; cx.setLineDash([10,10]); cx.strokeRect(COMP.w*0.05,COMP.h*0.05,COMP.w*0.9,COMP.h*0.9); cx.setLineDash([]);
+  const t=S.t, Ls=S.scene.layers, U=userLayers();
+  // 軌跡
+  if(S.ex.trail && S.trail && U[0] && U[0].shape!=='text'){
+    const L=U[0];
+    for(let i=24;i>=1;i--){ const tt=t-i/COMP.fps; if(tt<0) continue; const p=ev(L,'position',tt); cx.beginPath(); cx.arc(p[0],p[1],5,0,Math.PI*2); cx.fillStyle='rgba(242,166,64,'+(0.55*(1-i/25))+')'; cx.fill(); }
+  }
+  for(let i=Ls.length-1;i>=0;i--) drawLayer(cx,Ls[i],t);
+  // 錨點標示
+  if(U[0] && U[0].shape!=='text' && U[0].shape!=='animtext'){ const L=U[0]; if(t>=L.inPoint && t<L.outPoint){ const p=ev(L,'position',t); cx.strokeStyle='rgba(78,164,242,.9)'; cx.lineWidth=3; cx.beginPath(); cx.arc(p[0],p[1],9,0,Math.PI*2); cx.moveTo(p[0]-16,p[1]); cx.lineTo(p[0]+16,p[1]); cx.moveTo(p[0],p[1]-16); cx.lineTo(p[0],p[1]+16); cx.stroke(); } }
+}
+
+// ---------- 讀值與錯誤 ----------
+let lastRead='', lastErr='';
+function fmtVal(v,prop){
+  const d=AE.PROP_INFO[prop].dims;
+  if(d==='text') return '"'+String(v).replace(/\r\n|\r|\n/g,'⏎')+'"';
+  if(d==='path') return 'createPath('+(v.points?v.points.length:0)+' 個點'+(v.closed?'，封閉':'，開放')+')';
+  if(d===1) return (+v).toFixed(2);
+  if(d===4) return '['+v.map(x=>(+x).toFixed(3)).join(', ')+']';
+  return v.map(x=>(+x).toFixed(1)).join(', ');
+}
+function updateReadout(){
+  const L=userLayers()[0]; if(!L) return;
+  const P=L.props[S.prop]; const isAmt=S.prop==='amount'; const nCh=isAmt?Array.from(L.spec.text||'').length:0;
+  const v=isAmt?AE.evalProp(P,S.t,{textIndex:1,textTotal:nCh}):AE.evalProp(P,S.t);
+  const s=L.name+'|'+fmtVal(v,S.prop);
+  if(s!==lastRead){ lastRead=s; const r=$('#readout'); r.innerHTML='';
+    const a=document.createElement('span'); a.textContent=L.name+' › '+P.label+(isAmt?'（第 1 個字，共 '+nCh+' 字）':'')+' ='; const b=document.createElement('b'); b.textContent=fmtVal(v,S.prop); r.append(a,b);
+    if(S.prop==='color'){ const sw=document.createElement('span'); sw.className='swatch'; sw.style.background=rgba(v); r.append(sw); }
+    if(userLayers().length>1){ const c=document.createElement('span'); c.className='chip'; c.textContent='共 '+userLayers().length+' 個複本，顯示第 1 個'; r.append(c); } }
+  let err=null; for(const U of userLayers()){ if(U.props[S.prop].err){ err=U.props[S.prop].err; break; } }
+  if(!err){ for(const X of S.scene.layers){ for(const k in X.props){ if(X.props[k].err){ err=X.props[k].err; break; } } if(err) break; } }
+  const es=err?JSON.stringify(err):'';
+  if(es!==lastErr){ lastErr=es; const box=$('#err');
+    if(err){ $('#errText').textContent=(err.line?'第 '+err.line+' 行：':'')+err.msg+'。預覽暫時使用屬性原本的值。'; box.classList.add('show'); errLine=err.line; }
+    else { box.classList.remove('show'); errLine=null; }
+    renderHL(); }
+}
+
+// ---------- 時間軸 ----------
+function tlRows(){
+  const L=userLayers()[0]; if(!L) return [];
+  const rows=[{type:'layer',L}];
+  for(const k of ['position','scale','rotation','opacity','color','sourceText','path','amount']){ const P=L.props[k]; if(P.keys.length || k===S.prop || (P.expr && k!==S.prop)) rows.push({type:'prop',P,L}); }
+  if(L.markers.length) rows.push({type:'marker',L});
+  return rows;
+}
+function tlHeight(){ return 26+tlRows().length*24+8; }
+function drawTL(){
+  const W=tl.width/DPR, H=tl.height/DPR; tx.setTransform(DPR,0,0,DPR,0,0);
+  tx.fillStyle='#1d1f23'; tx.fillRect(0,0,W,H);
+  const left=W<520?78:118, right=14, tw=W-left-right, X=t=>left+t/COMP.dur*tw;
+  tx.fillStyle='#17181b'; tx.fillRect(0,0,left,H);
+  // 刻度
+  tx.font='11px "JetBrains Mono",monospace'; tx.textBaseline='middle';
+  for(let s=0;s<=COMP.dur*2;s++){ const x=X(s/2); tx.strokeStyle=s%2?'#2c2f35':'#3b3f46'; tx.beginPath(); tx.moveTo(x,s%2?18:12); tx.lineTo(x,24); tx.stroke(); if(s%2===0){ tx.fillStyle='#8d939c'; tx.textAlign=s===0?'left':(s===COMP.dur*2?'right':'center'); tx.fillText((s/2)+'s',x,8); } }
+  tx.strokeStyle='#33373d'; tx.beginPath(); tx.moveTo(0,25.5); tx.lineTo(W,25.5); tx.stroke();
+  const rows=tlRows(); let y=26;
+  for(const r of rows){
+    const cy=y+12;
+    tx.textAlign='left'; tx.fillStyle='#dde0e5'; tx.font=(r.type==='layer'?'600 12px':'12px')+' "Noto Sans TC",sans-serif';
+    if(r.type==='layer'){ tx.fillText(fit(r.L.name,left-14),8,cy); const c=r.L.props.color.base; tx.fillStyle=rgba(c,0.28); tx.fillRect(X(r.L.inPoint),y+5,X(r.L.outPoint)-X(r.L.inPoint),14); tx.fillStyle=rgba(c,0.9); tx.fillRect(X(r.L.inPoint),y+5,3,14); tx.fillRect(X(r.L.outPoint)-3,y+5,3,14); }
+    else if(r.type==='prop'){ const P=r.P; tx.fillStyle=P.expr?'#f2a640':'#b9bec6'; tx.fillText(fit((P.expr?'= ':'')+P.label.replace('填色 › ',''),left-14),14,cy);
+      if(P.expr){ tx.strokeStyle='rgba(242,166,64,.35)'; tx.setLineDash([3,4]); tx.beginPath(); tx.moveTo(left,cy); tx.lineTo(W-right,cy); tx.stroke(); tx.setLineDash([]); }
+      for(const k of P.keys){ const x=X(k.t); tx.save(); tx.translate(x,cy); tx.rotate(Math.PI/4); tx.fillStyle=k.e==='linear'?'#dde0e5':'#a9cdf2'; tx.fillRect(-4.5,-4.5,9,9); tx.restore(); } }
+    else { tx.fillStyle='#b9bec6'; tx.fillText('標記',14,cy); for(const m of r.L.markers){ const x=X(m.time); tx.fillStyle='#62c48a'; tx.beginPath(); tx.moveTo(x-6,y+5); tx.lineTo(x+6,y+5); tx.lineTo(x,y+15); tx.closePath(); tx.fill(); tx.fillStyle='#8d939c'; tx.font='11px "JetBrains Mono",monospace'; tx.fillText(m.comment,x+8,cy); } }
+    y+=24; tx.strokeStyle='#26292e'; tx.beginPath(); tx.moveTo(0,y+.5); tx.lineTo(W,y+.5); tx.stroke();
+  }
+  const px=X(S.t); tx.strokeStyle='#4ea4f2'; tx.lineWidth=1.5; tx.beginPath(); tx.moveTo(px,4); tx.lineTo(px,H); tx.stroke(); tx.lineWidth=1;
+  tx.fillStyle='#4ea4f2'; tx.beginPath(); tx.moveTo(px-6,0); tx.lineTo(px+6,0); tx.lineTo(px+6,8); tx.lineTo(px,13); tx.lineTo(px-6,8); tx.closePath(); tx.fill();
+  tl._map={left,tw};
+}
+function fit(s,w){ if(tx.measureText(s).width<=w) return s; while(s.length>1 && tx.measureText(s+'…').width>w) s=s.slice(0,-1); return s+'…'; }
+function scrubAt(e){ const r=tl.getBoundingClientRect(); const m=tl._map||{left:100,tw:r.width-120}; let t=(e.clientX-r.left-m.left)/m.tw*COMP.dur; t=Math.max(0,Math.min(COMP.dur-1/COMP.fps,t)); S.t=Math.round(t*COMP.fps)/COMP.fps; S.dirty=true; }
+tl.addEventListener('pointerdown',e=>{ tl.setPointerCapture(e.pointerId); S.wasPlaying=S.playing; setPlaying(false); scrubAt(e); tl._drag=true; });
+tl.addEventListener('pointermove',e=>{ if(tl._drag) scrubAt(e); });
+tl.addEventListener('pointerup',()=>{ tl._drag=false; });
+
+// ---------- 數值圖表 ----------
+const SER=['#ee6a5c','#62c48a','#4ea4f2','#c9ccd2','#f2a640','#b48af0'];
+function computeGraph(){
+  const L=userLayers()[0]; S.graph=null; if(!L) return;
+  const d=AE.PROP_INFO[S.prop].dims; const N=Math.min(360,Math.max(120,Math.floor(gr.width/DPR/2)));
+  if(d==='text'||d==='path'){ S.graph={msg: d==='text'?'文字屬性的結果是字串，請看合成預覽與上方讀值。':'路徑屬性的結果是形狀，請看合成預覽。'}; return; }
+  const ts=[]; for(let i=0;i<=N;i++) ts.push(i/N*COMP.dur*0.9999);
+  if(d===4){ S.graph={color:ts.map(t=>ev(L,'color',t))}; return; }
+  let series=[], names=[];
+  if(d==='amount'){ const n=Array.from(L.spec.text||'').length; const pick=[1,2,3,4,5].filter(i=>i<=n);
+    S.graph=null; series=pick.map(i=>ts.map(t=>AE.evalProp(L.props.amount,t,{textIndex:i,textTotal:n})[0])); names=pick.map(i=>'第 '+i+' 字');
+    return finishGraph(series,names); }
+  if(S.ex.labels){ userLayers().forEach((U,i)=>{ series.push(ts.map(t=>{ const v=ev(U,S.prop,t); return Array.isArray(v)?v[0]:v; })); names.push(U.name+(d===2?' X':'')); }); }
+  else if(d===1){ series=[ts.map(t=>ev(L,S.prop,t))]; names=[AE.PROP_INFO[S.prop].label]; }
+  else { const vals=ts.map(t=>ev(L,S.prop,t)); series=[vals.map(v=>v[0]),vals.map(v=>v[1])]; names=[S.prop==='scale'?'寬 %':'X',S.prop==='scale'?'高 %':'Y']; }
+  finishGraph(series,names);
+}
+function finishGraph(series,names){
+  let mn=Infinity,mx=-Infinity; for(const s of series) for(const v of s){ if(isFinite(v)){ mn=Math.min(mn,v); mx=Math.max(mx,v); } }
+  if(!isFinite(mn)){ mn=0; mx=1; } if(mx-mn<1e-6){ mn-=1; mx+=1; } const pad=(mx-mn)*0.08; mn-=pad; mx+=pad;
+  S.graph={series,names,mn,mx};
+}
+function niceTicks(mn,mx,n){ const span=mx-mn; const step0=span/n; const mag=Math.pow(10,Math.floor(Math.log10(step0))); const st=[1,2,2.5,5,10].map(x=>x*mag).find(x=>span/x<=n)||mag*10; const out=[]; for(let v=Math.ceil(mn/st)*st; v<=mx+1e-9; v+=st) out.push(+v.toFixed(6)); return out; }
+function drawGraph(){
+  const W=gr.width/DPR, H=gr.height/DPR; gx.setTransform(DPR,0,0,DPR,0,0); gx.clearRect(0,0,W,H);
+  const g=S.graph, box=$('#graphBox'), leg=$('#legend');
+  let msg=box.querySelector('.graph-msg');
+  if(!g||g.msg){ gr.style.display='none'; if(!msg){ msg=document.createElement('div'); msg.className='graph-msg'; box.append(msg); } msg.textContent=g?g.msg:''; leg.innerHTML=''; return; }
+  gr.style.display=''; if(msg) msg.remove();
+  const l=52, r=12, t=10, b=22, w=W-l-r, h=H-t-b; const X=tt=>l+tt/COMP.dur*w;
+  gx.font='10.5px "JetBrains Mono",monospace'; gx.textBaseline='middle';
+  for(let s=0;s<=COMP.dur;s++){ const x=X(s); gx.strokeStyle='#26292e'; gx.beginPath(); gx.moveTo(x,t); gx.lineTo(x,t+h); gx.stroke(); gx.fillStyle='#8d939c'; gx.textAlign=s===0?'left':s===COMP.dur?'right':'center'; gx.fillText(s+'s',x,H-9); }
+  if(g.color){
+    const n=g.color.length; for(let i=0;i<n-1;i++){ gx.fillStyle=rgba(g.color[i]); gx.fillRect(X(i/(n-1)*COMP.dur),t+8,w/(n-1)+1,h-16); }
+    gx.strokeStyle='#33373d'; gx.strokeRect(l,t+8,w,h-16); gx.fillStyle='#8d939c'; gx.textAlign='right'; gx.fillText('顏色',l-8,t+h/2);
+    leg.innerHTML='<span>顏色隨時間變化</span>';
+  } else {
+    const Y=v=>t+h-(v-g.mn)/(g.mx-g.mn)*h;
+    const ticks=niceTicks(g.mn,g.mx,4); gx.textAlign='right';
+    for(const v of ticks){ const y=Y(v); gx.strokeStyle='#26292e'; gx.beginPath(); gx.moveTo(l,y); gx.lineTo(l+w,y); gx.stroke(); gx.fillStyle='#8d939c'; gx.fillText(Math.abs(v)>=1000?Math.round(v):(+v.toFixed(2)),l-8,y); }
+    g.series.forEach((s,si)=>{ const c=SER[si%SER.length]; gx.strokeStyle=c; gx.lineWidth=1.8; gx.beginPath(); let started=false;
+      s.forEach((v,i)=>{ if(!isFinite(v)){ started=false; return; } const x=X(i/(s.length-1)*COMP.dur), y=Y(v); started?gx.lineTo(x,y):gx.moveTo(x,y); started=true; }); gx.stroke(); gx.lineWidth=1; });
+    leg.innerHTML=''; g.names.forEach((nm,i)=>{ const sp=document.createElement('span'); const ic=document.createElement('i'); ic.style.background=SER[i%SER.length]; sp.append(ic,document.createTextNode(nm)); leg.append(sp); });
+    // 目前值的點
+    const L=userLayers()[0]; if(L){ const isAmt=S.prop==='amount'; const nCh=isAmt?Array.from(L.spec.text||'').length:0; const v=isAmt?null:ev(L,S.prop,S.t); const vals=isAmt?g.series.map((_,i)=>AE.evalProp(L.props.amount,S.t,{textIndex:i+1,textTotal:nCh})[0]):S.ex.labels?userLayers().map(U=>{const q=ev(U,S.prop,S.t); return Array.isArray(q)?q[0]:q;}):(Array.isArray(v)?v.slice(0,2):[v]);
+      vals.forEach((q,i)=>{ if(!isFinite(q)) return; gx.fillStyle=SER[i%SER.length]; gx.beginPath(); gx.arc(X(S.t),Y(q),4,0,Math.PI*2); gx.fill(); gx.strokeStyle='#1d1f23'; gx.lineWidth=2; gx.stroke(); gx.lineWidth=1; }); }
+  }
+  const px=X(S.t); gx.strokeStyle='rgba(78,164,242,.8)'; gx.beginPath(); gx.moveTo(px,t); gx.lineTo(px,t+h); gx.stroke();
+}
+
+// ---------- 播放 ----------
+function setPlaying(p){ S.playing=p; $('#playIco').innerHTML=p?'<path d="M3 2h3v10H3zM8 2h3v10H8z"/>':'<path d="M3 1.5v11l9-5.5z"/>'; $('#bPlay').setAttribute('aria-label',p?'暫停':'播放'); }
+function step(n){ setPlaying(false); S.t=((Math.round(S.t*COMP.fps)+n)%(COMP.dur*COMP.fps)+COMP.dur*COMP.fps)%(COMP.dur*COMP.fps)/COMP.fps; S.dirty=true; }
+let lastTs=null, lastTc='';
+function frame(ts){
+  if(lastTs==null) lastTs=ts; const dt=Math.min(0.1,(ts-lastTs)/1000); lastTs=ts;
+  if(S.playing){ S.t+=dt*S.speed; if(S.t>=COMP.dur) S.t%=COMP.dur; S.dirty=true; }
+  if(S.graphDirty){ S.graphDirty=false; const h=tlHeight(); if(Math.abs(tl.height/DPR-h)>1) fitCanvas(tl,h); computeGraph(); }
+  if(S.dirty){ S.dirty=false;
+    const tf=Math.floor(S.t*COMP.fps+1e-6); const tcs=tf+'';
+    if(tcs!==lastTc){ lastTc=tcs; const f=tf%COMP.fps, s=Math.floor(tf/COMP.fps); $('#tc').innerHTML='0:00:'+String(s).padStart(2,'0')+':'+String(f).padStart(2,'0')+'<small>'+S.t.toFixed(2)+' 秒 · 第 '+tf+' 格</small>'; }
+    drawComp(); drawTL(); drawGraph(); updateReadout(); }
+  requestAnimationFrame(frame);
+}
+
+// ---------- 事件 ----------
+const ta=$('#code');
+let edTimer=null;
+ta.addEventListener('input',()=>{ S.code=ta.value; renderHL(); renderSel(); clearTimeout(edTimer); edTimer=setTimeout(()=>setCode(ta.value,true),120); });
+for(const evn of ['select','keyup','mouseup','pointerup','focus','blur']) ta.addEventListener(evn,()=>setTimeout(renderSel,0));
+document.addEventListener('selectionchange',()=>{ if(document.activeElement===ta) renderSel(); });
+ta.addEventListener('keydown',e=>{
+  if(e.key==='Tab' && !e.shiftKey){ e.preventDefault(); if(!document.execCommand('insertText',false,'  ')) ta.setRangeText('  ',ta.selectionStart,ta.selectionEnd,'end'); ta.dispatchEvent(new Event('input')); }
+});
+$('#bPlay').onclick=()=>setPlaying(!S.playing);
+$('#bStart').onclick=()=>{ S.t=0; S.dirty=true; };
+$('#bPrev').onclick=()=>step(-1); $('#bNext').onclick=()=>step(1);
+$('#speed').onchange=e=>{ S.speed=+e.target.value; };
+$('#trailTog').onchange=e=>{ S.trail=e.target.checked; S.dirty=true; };
+$('#search').addEventListener('input',renderSide);
+// 側欄抽屜：開啟時鎖住頁面捲動，避免背景與頂列分離
+let lockY=0;
+function setDrawer(open){
+  const body=document.body; if(open===body.classList.contains('drawer')) return;
+  const mobile=matchMedia('(max-width:820px)').matches;
+  if(open){ if(mobile){ lockY=window.scrollY; body.style.top=(-lockY)+'px'; body.classList.add('locked'); } body.classList.add('drawer'); }
+  else { body.classList.remove('drawer'); if(body.classList.contains('locked')){ body.classList.remove('locked'); body.style.top=''; window.scrollTo(0,lockY); } }
+  $('#menuBtn').setAttribute('aria-expanded',String(open));
+}
+function measureTop(){ document.documentElement.style.setProperty('--top-h',$('.top').offsetHeight+'px'); }
+measureTop(); window.addEventListener('resize',measureTop);
+$('#menuBtn').onclick=()=>setDrawer(!document.body.classList.contains('drawer'));
+$('#scrim').onclick=()=>setDrawer(false);
+$('#scrim').addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') setDrawer(false); });
+document.addEventListener('keydown',e=>{
+  const tag=(document.activeElement&&document.activeElement.tagName)||''; if(/INPUT|TEXTAREA|SELECT/.test(tag)) return;
+  if(e.key==='/'){ e.preventDefault(); if(matchMedia('(max-width:1100px)').matches) setDrawer(true); $('#search').focus(); return; }
+  if(e.code==='Space'){ e.preventDefault(); setPlaying(!S.playing); }
+  else if(e.key==='PageDown'||e.key==='.'){ step(1); } else if(e.key==='PageUp'||e.key===','){ step(-1); }
+});
+$('#bCopy').onclick=async()=>{ const b=$('#bCopy'); let ok=false;
+  try{ await navigator.clipboard.writeText(S.code); ok=true; }catch(e){ try{ ta.focus(); ta.select(); ok=document.execCommand('copy'); }catch(_){} }
+  b.textContent=ok?'已複製':'請手動選取複製'; setTimeout(()=>b.textContent='複製',1600); };
+$('#bReset').onclick=()=>{ if(S.saved){ go(S.saved.base); return; } setCode(defaultCode()); renderParams(true); };
+$('#bSave').onclick=()=>{ const bar=$('#savebar'); bar.classList.toggle('show'); const n=$('#saveName'); n.value=(S.saved?S.saved.name:S.ex.name)+'（自訂）'; if(bar.classList.contains('show')) n.focus(); };
+$('#bSaveNo').onclick=()=>$('#savebar').classList.remove('show');
+const doSave=()=>{ const name=$('#saveName').value.trim()||S.ex.name; const item={id:'my-'+Date.now().toString(36), base:S.ex.id, name, code:S.code, prop:S.prop};
+  S.savedList.unshift(item); store.set('saved',S.savedList); Sync.dirty(); S.closed.mine=false; $('#savebar').classList.remove('show'); go(item.id); };
+$('#bSaveOk').onclick=doSave; $('#saveName').addEventListener('keydown',e=>{ if(e.key==='Enter') doSave(); if(e.key==='Escape') $('#savebar').classList.remove('show'); });
+const lp=$('#labProp');
+for(const k in AE.PROP_INFO){ if(k==='anchorPoint'||k==='amount') continue; const o=document.createElement('option'); o.value=k; o.textContent=AE.PROP_INFO[k].label; lp.append(o); }
+lp.onchange=()=>{ S.labProp=lp.value; store.set('labProp',S.labProp); Sync.dirty(); S.saved=null; load('lab'); };
+window.addEventListener('hashchange',()=>load(location.hash.slice(1)));
+let rzT=null; window.addEventListener('resize',()=>{ clearTimeout(rzT); rzT=setTimeout(resizeAll,80); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ S.dirty=true; });
+
+
+// ---------- 帳號同步（以 Claude 帳號識別，存在此頁的個人私有資料區） ----------
+const Sync=(function(){
+  let db=null, ref=null, ready=false, timer=null, writing=false, again=false, lastSent='', status='local';
+  const btn=$('#syncBtn'), txt=$('#syncTxt'), title=$('#syncTitle'), desc=$('#syncDesc');
+  function show(st,msg){ status=st; btn.classList.remove('ok','busy','off'); if(st==='ok') btn.classList.add('ok'); if(st==='busy'||st==='loading') btn.classList.add('busy'); if(st==='off') btn.classList.add('off');
+    txt.textContent = st==='ok'?'已同步' : st==='busy'?'同步中…' : st==='loading'?'連線中…' : st==='off'?'未同步':'僅存本機';
+    title.textContent = st==='ok'?'已綁定你的 Claude 帳號' : st==='local'||st==='off'?'目前只存在這台裝置' : '正在連線到你的帳號';
+    desc.textContent = msg; }
+  function payload(){ return { saved:S.savedList, codes:S.codes, labProp:S.labProp, v:1 }; }
+  function applyRemote(d){
+    const before=JSON.stringify(payload());
+    S.savedList=Array.isArray(d.saved)?d.saved.filter(x=>x&&x.id&&x.base&&typeof x.code==='string'):[];
+    S.codes=(d.codes&&typeof d.codes==='object')?Object.assign({},d.codes):{};
+    if(d.labProp && AE.PROP_INFO[d.labProp]) S.labProp=d.labProp;
+    store.set('saved',S.savedList); store.set('codes',S.codes); store.set('labProp',S.labProp);
+    if(JSON.stringify(payload())===before) return;
+    const id=location.hash.slice(1);
+    if(document.activeElement===$('#code')){ renderSide(); return; } // 正在編輯時不打斷，只更新清單
+    load(id||'wiggle-basic');
+  }
+  function merge(d){ // 第一次連線：雲端與本機合併，兩邊都不遺失
+    const ids=new Set((d.saved||[]).map(x=>x.id));
+    const saved=(d.saved||[]).concat(S.savedList.filter(x=>!ids.has(x.id)));
+    return { saved, codes:Object.assign({},S.codes,d.codes||{}), labProp:d.labProp||S.labProp, v:1 };
+  }
+  async function flush(){
+    if(!ready) return; if(writing){ again=true; return; }
+    const body=payload(); const js=JSON.stringify(body); if(js===lastSent) { show('ok','收藏與修改已存到你的帳號，在其他裝置用同一個 Claude 帳號開啟此頁即可使用。'); return; }
+    writing=true; show('busy','正在上傳變更…');
+    try{ await ref.set(JSON.parse(js)); lastSent=js; show('ok','收藏與修改已存到你的帳號，在其他裝置用同一個 Claude 帳號開啟此頁即可使用。'); }
+    catch(e){ show('off', e&&e.code==='quota_exceeded'?'帳號儲存空間已滿，請刪除一些收藏後再試。':'上傳失敗，變更仍保存在這台裝置，稍後會再試一次。'); setTimeout(dirty,8000); }
+    finally{ writing=false; if(again){ again=false; dirty(); } }
+  }
+  function dirty(){ if(!ready) return; clearTimeout(timer); show('busy','有尚未上傳的變更…'); timer=setTimeout(flush,900); }
+  async function init(){
+    show('loading','正在確認你的 Claude 帳號…');
+    if(!window.claude || !window.claude.use){ show('local','這個環境無法連到帳號，資料只存在這台裝置的瀏覽器。'); return; }
+    let user;
+    try{ [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]); }catch(e){ db=null; }
+    const uid = user ? await user.id().catch(()=>null) : null;
+    if(!db || !uid){ show('local','需要登入 Claude 才能同步。目前資料只存在這台裝置的瀏覽器。'); return; }
+    ref=db.doc('data/users/'+uid+'/state');
+    let first=true;
+    const to=setTimeout(()=>{ if(first) show('off','暫時連不上帳號資料，變更會先存在這台裝置。'); },10000);
+    ref.onSnapshot(snap=>{
+      if(snap.metadata.hasPendingWrites) return;
+      if(first){ if(snap.metadata.fromCache) return; first=false; clearTimeout(to); ready=true;
+        if(snap.exists){ const m=merge(snap.data()); applyRemote(m); lastSent=JSON.stringify(snap.data()); if(JSON.stringify(payload())!==lastSent) dirty(); else show('ok','收藏與修改已存到你的帳號，在其他裝置用同一個 Claude 帳號開啟此頁即可使用。'); }
+        else dirty();
+        return; }
+      if(snap.exists){ const d=snap.data(); const js=JSON.stringify(d); if(js===lastSent) return; lastSent=js; applyRemote(d); show('ok','已收到其他裝置的更新。'); }
+    }, err=>{ clearTimeout(to); show('off', err&&err.code==='revoked'?'這個頁面的存取權已變更，資料只存在這台裝置。':'與帳號的連線中斷，資料只存在這台裝置。重新開啟頁面可再連線。'); ready=false; });
+  }
+  btn.onclick=()=>{ const p=$('#syncPop'); p.hidden=!p.hidden; btn.setAttribute('aria-expanded',String(!p.hidden)); };
+  document.addEventListener('click',e=>{ const p=$('#syncPop'); if(!p.hidden && !e.target.closest('.syncwrap')){ p.hidden=true; btn.setAttribute('aria-expanded','false'); } });
+  $('#syncNow').onclick=()=>{ if(ready){ clearTimeout(timer); lastSent=''; flush(); } else init(); };
+  return { init, dirty };
+})();
+
+// ---------- 面板收合 ----------
+(function(){
+  const st=store.get('folds',{});
+  document.querySelectorAll('[data-fold]').forEach(panel=>{
+    const key=panel.dataset.fold, ph=panel.querySelector('.ph'); if(!ph) return;
+    const b=document.createElement('button'); b.type='button'; b.className='fold';
+    b.innerHTML='<svg viewBox="0 0 12 12" fill="none" stroke-width="1.6"><path d="M3 4.5l3 3 3-3"/></svg>';
+    const h=ph.querySelector('h3'); if(h) h.classList.add('foldable');
+    const set=(f)=>{ panel.classList.toggle('folded',f); b.setAttribute('aria-expanded',String(!f)); b.setAttribute('aria-label',(f?'展開 ':'收合 ')+(h?h.textContent:'')); };
+    set(key in st ? st[key] : panel.dataset.foldDefault==='closed');
+    const toggle=()=>{ const f=!panel.classList.contains('folded'); set(f); st[key]=f; store.set('folds',st); setTimeout(()=>{ S.graphDirty=true; S.dirty=true; resizeAll(); },0); };
+    b.onclick=toggle; if(h) h.onclick=toggle;
+    ph.append(b);
+  });
+})();
+if(window.ResizeObserver){ let t=null; new ResizeObserver(()=>{ clearTimeout(t); t=setTimeout(resizeAll,60); }).observe(document.querySelector('.p-comp')); }
+
+setPlaying(S.playing);
+Sync.init();
+load(location.hash.slice(1)||'wiggle-basic');
+requestAnimationFrame(frame);
+})();
+
+</script>
+</body>
+</html>
