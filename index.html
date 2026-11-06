@@ -1950,7 +1950,7 @@ function drawTL(){
   tx.fillStyle='#17181b'; tx.fillRect(0,0,left,H);
   // 刻度
   tx.font='11px "JetBrains Mono",monospace'; tx.textBaseline='middle';
-  for(let s=0;s<=COMP.dur*2;s++){ const x=X(s/2); tx.strokeStyle=s%2?'#2c2f35':'#3b3f46'; tx.beginPath(); tx.moveTo(x,s%2?18:12); tx.lineTo(x,24); tx.stroke(); if(s%2===0){ tx.fillStyle='#8d939c'; tx.textAlign=s===0?'left':(s===COMP.dur*2?'right':'center'); tx.fillText((s/2)+'s',x,8); } }
+  for(let s=0;s<=COMP.dur*2;s++){ const x=X(s/2); tx.strokeStyle=s%2?'#2c2f35':'#3b3f46'; tx.beginPath(); tx.moveTo(x,s%2?18:12); tx.lineTo(x,24); tx.stroke(); if(s%2===0){ tx.fillStyle='#8d939c'; tx.textAlign='center'; tx.fillText((s/2)+'s',x,8); } }
   tx.strokeStyle='#33373d'; tx.beginPath(); tx.moveTo(0,25.5); tx.lineTo(W,25.5); tx.stroke();
   const rows=tlRows(); let y=26;
   for(const r of rows){
@@ -2004,7 +2004,7 @@ function drawGraph(){
   gr.style.display=''; if(msg) msg.remove();
   const l=52, r=12, t=10, b=22, w=W-l-r, h=H-t-b; const X=tt=>l+tt/COMP.dur*w;
   gx.font='10.5px "JetBrains Mono",monospace'; gx.textBaseline='middle';
-  for(let s=0;s<=COMP.dur;s++){ const x=X(s); gx.strokeStyle='#26292e'; gx.beginPath(); gx.moveTo(x,t); gx.lineTo(x,t+h); gx.stroke(); gx.fillStyle='#8d939c'; gx.textAlign=s===0?'left':s===COMP.dur?'right':'center'; gx.fillText(s+'s',x,H-9); }
+  for(let s=0;s<=COMP.dur;s++){ const x=X(s); gx.strokeStyle='#26292e'; gx.beginPath(); gx.moveTo(x,t); gx.lineTo(x,t+h); gx.stroke(); gx.fillStyle='#8d939c'; gx.textAlign='center'; gx.fillText(s+'s',x,H-9); }
   if(g.color){
     const n=g.color.length; for(let i=0;i<n-1;i++){ gx.fillStyle=rgba(g.color[i]); gx.fillRect(X(i/(n-1)*COMP.dur),t+8,w/(n-1)+1,h-16); }
     gx.strokeStyle='#33373d'; gx.strokeRect(l,t+8,w,h-16); gx.fillStyle='#8d939c'; gx.textAlign='right'; gx.fillText('顏色',l-8,t+h/2);
