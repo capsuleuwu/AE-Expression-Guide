@@ -318,23 +318,27 @@ function drawTL(){
   tx.fillStyle='#17181b'; tx.fillRect(0,0,left,H);
   // 刻度
   tx.font='11px "JetBrains Mono",monospace'; tx.textBaseline='middle';
-  for(let s=0;s<=COMP.dur*2;s++){ const x=X(s/2); tx.strokeStyle=s%2?'#2c2f35':'#3b3f46'; tx.beginPath(); tx.moveTo(x,s%2?27:22); tx.lineTo(x,33); tx.stroke(); if(s%2===0){ tx.fillStyle='#8d939c'; tx.textAlign='center'; tx.fillText((s/2)+'s',x,11); } }
+  for(let s=0;s<=COMP.dur*2;s++){ const x=X(s/2); tx.strokeStyle=s%2?'#2c2f35':'#3b3f46'; tx.beginPath(); tx.moveTo(x,s%2?27:22); tx.lineTo(x,33); tx.stroke(); if(s%2===0){ tx.fillStyle='#8d939c'; tx.textAlign='center'; fillMid(tx,(s/2)+'s',x,11); } }
   tx.strokeStyle='#33373d'; tx.beginPath(); tx.moveTo(0,33.5); tx.lineTo(W,33.5); tx.stroke();
   const rows=tlRows(); let y=34; // 刻度區高 34：數字上方與數字到刻度之間各留約 7px
   rows.forEach((r,ri)=>{
     const cy=y+12;
     tx.textAlign='left'; tx.fillStyle='#dde0e5'; tx.font=(r.type==='layer'?'600 12px':'12px')+' "Noto Sans TC",sans-serif';
-    if(r.type==='layer'){ tx.fillText(fit(r.L.name,left-14),8,cy); const c=r.L.props.color.base; tx.fillStyle=rgba(c,0.28); tx.fillRect(X(r.L.inPoint),y+5,X(r.L.outPoint)-X(r.L.inPoint),14); tx.fillStyle=rgba(c,0.9); tx.fillRect(X(r.L.inPoint),y+5,3,14); tx.fillRect(X(r.L.outPoint)-3,y+5,3,14); }
-    else if(r.type==='prop'){ const P=r.P; tx.fillStyle=P.expr?'#f2a640':'#b9bec6'; tx.fillText(fit((P.expr?'= ':'')+P.label.replace('填色 › ',''),left-14),14,cy);
+    if(r.type==='layer'){ fillMid(tx,fit(r.L.name,left-14),8,cy); const c=r.L.props.color.base; tx.fillStyle=rgba(c,0.28); tx.fillRect(X(r.L.inPoint),y+5,X(r.L.outPoint)-X(r.L.inPoint),14); tx.fillStyle=rgba(c,0.9); tx.fillRect(X(r.L.inPoint),y+5,3,14); tx.fillRect(X(r.L.outPoint)-3,y+5,3,14); }
+    else if(r.type==='prop'){ const P=r.P; tx.fillStyle=P.expr?'#f2a640':'#b9bec6'; fillMid(tx,fit((P.expr?'= ':'')+P.label.replace('填色 › ',''),left-14),14,cy);
       if(P.expr){ tx.strokeStyle='rgba(242,166,64,.35)'; tx.setLineDash([3,4]); tx.beginPath(); tx.moveTo(left,cy); tx.lineTo(W-right,cy); tx.stroke(); tx.setLineDash([]); }
       for(const k of P.keys){ const x=X(k.t); tx.save(); tx.translate(x,cy); tx.rotate(Math.PI/4); tx.fillStyle=k.e==='linear'?'#dde0e5':'#a9cdf2'; tx.fillRect(-4.5,-4.5,9,9); tx.restore(); } }
-    else { tx.fillStyle='#b9bec6'; tx.fillText('標記',14,cy); for(const m of r.L.markers){ const x=X(m.time); tx.fillStyle='#62c48a'; tx.beginPath(); tx.moveTo(x-6,y+5); tx.lineTo(x+6,y+5); tx.lineTo(x,y+15); tx.closePath(); tx.fill(); tx.fillStyle='#8d939c'; tx.font='11px "JetBrains Mono",monospace'; tx.fillText(m.comment,x+8,cy); } }
+    else { tx.fillStyle='#b9bec6'; fillMid(tx,'標記',14,cy); for(const m of r.L.markers){ const x=X(m.time); tx.fillStyle='#62c48a'; tx.beginPath(); tx.moveTo(x-6,y+5); tx.lineTo(x+6,y+5); tx.lineTo(x,y+15); tx.closePath(); tx.fill(); tx.fillStyle='#8d939c'; tx.font='11px "JetBrains Mono",monospace'; fillMid(tx,m.comment,x+8,cy); } }
     y+=24; if(ri<rows.length-1){ tx.strokeStyle='#26292e'; tx.beginPath(); tx.moveTo(0,y+.5); tx.lineTo(W,y+.5); tx.stroke(); } // 最後一列下方不畫分隔線
   });
   const px=X(S.t); tx.strokeStyle='#4ea4f2'; tx.lineWidth=1.5; tx.beginPath(); tx.moveTo(px,4); tx.lineTo(px,H); tx.stroke(); tx.lineWidth=1;
   tx.fillStyle='#4ea4f2'; tx.beginPath(); tx.moveTo(px-6,0); tx.lineTo(px+6,0); tx.lineTo(px+6,8); tx.lineTo(px,13); tx.lineTo(px-6,8); tx.closePath(); tx.fill();
   tl._map={left,tw};
 }
+// 依字形實際高度垂直置中（不依字型的 middle 基準線，避免中文、數字看起來偏上）
+function fillMid(c,text,x,cy){ const bl=c.textBaseline; c.textBaseline='alphabetic'; const m=c.measureText(text);
+  const a=m.actualBoundingBoxAscent, d=m.actualBoundingBoxDescent;
+  c.fillText(text,x,(isFinite(a)&&isFinite(d))? cy+(a-d)/2 : cy+4); c.textBaseline=bl; }
 function fit(s,w){ if(tx.measureText(s).width<=w) return s; while(s.length>1 && tx.measureText(s+'…').width>w) s=s.slice(0,-1); return s+'…'; }
 function scrubAt(e){ const r=tl.getBoundingClientRect(); const m=tl._map||{left:100,tw:r.width-120}; let t=(e.clientX-r.left-m.left)/m.tw*COMP.dur; t=Math.max(0,Math.min(COMP.dur-1/COMP.fps,t)); S.t=Math.round(t*COMP.fps)/COMP.fps; S.dirty=true; }
 tl.addEventListener('pointerdown',e=>{ tl.setPointerCapture(e.pointerId); S.wasPlaying=S.playing; setPlaying(false); scrubAt(e); tl._drag=true; });
