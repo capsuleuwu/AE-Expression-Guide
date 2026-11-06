@@ -234,6 +234,13 @@ code,.mono{font-family:var(--mono)}
   .p-doc{order:1}.p-comp{order:2}.p-tl{order:3}.p-params{order:4}.p-fx{order:5}.p-code{order:6}.p-graph{order:7}.p-how{order:8}
   .brand small{display:none}
   .doc h2{font-size:19px}
+  /* 讀值列：手機版維持一行，空間不夠時名稱先縮短並以 … 結尾 */
+  .readout{flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
+  .readout > *{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .readout > span:first-child{flex:0 100 auto;min-width:4.5em}
+  .readout > b{flex:0 0 auto;max-width:calc(100% - 4.5em - 8px);word-break:normal}
+  .readout > .swatch{flex:none}
+  .readout > .chip{display:none}
   .prow{grid-template-columns:80px 1fr 66px}
   .tc{width:150px;margin:0 4px}
 }
