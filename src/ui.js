@@ -51,10 +51,10 @@ function renderSide(){
 }
 const exById=id=>EX.find(e=>e.id===id);
 // ---------- 手機版 wiggle 輕量模式 ----------
-// 只在手機寬度、且表達式用到 wiggle 時啟用：拖動滑桿時每個畫面最多更新一次、
+// 只在手機寬度、且是「wiggle 隨機晃動」這個範例時啟用：拖動滑桿時每個畫面最多更新一次、
 // 放開後才重算數值圖表、延後存檔、預設關閉運動軌跡。其他頁面與電腦版行為不變。
 const MOBILE=matchMedia('(max-width:820px)');
-function lite(){ return MOBILE.matches && /\bwiggle\s*\(/.test(S.code||''); }
+function lite(){ return MOBILE.matches && !!S.ex && S.ex.id==='wiggle-basic'; }
 let liteSaveT=null;
 
 // ---------- 切換範例 ----------
