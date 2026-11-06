@@ -1942,7 +1942,7 @@ function tlRows(){
   if(L.markers.length) rows.push({type:'marker',L});
   return rows;
 }
-function tlHeight(){ return 26+tlRows().length*24+4; }
+function tlHeight(){ return 34+tlRows().length*24+4; }
 function drawTL(){
   const W=tl.width/DPR, H=tl.height/DPR; tx.setTransform(DPR,0,0,DPR,0,0);
   tx.fillStyle='#1d1f23'; tx.fillRect(0,0,W,H);
@@ -1950,9 +1950,9 @@ function drawTL(){
   tx.fillStyle='#17181b'; tx.fillRect(0,0,left,H);
   // 刻度
   tx.font='11px "JetBrains Mono",monospace'; tx.textBaseline='middle';
-  for(let s=0;s<=COMP.dur*2;s++){ const x=X(s/2); tx.strokeStyle=s%2?'#2c2f35':'#3b3f46'; tx.beginPath(); tx.moveTo(x,s%2?18:12); tx.lineTo(x,24); tx.stroke(); if(s%2===0){ tx.fillStyle='#8d939c'; tx.textAlign='center'; tx.fillText((s/2)+'s',x,8); } }
-  tx.strokeStyle='#33373d'; tx.beginPath(); tx.moveTo(0,25.5); tx.lineTo(W,25.5); tx.stroke();
-  const rows=tlRows(); let y=26;
+  for(let s=0;s<=COMP.dur*2;s++){ const x=X(s/2); tx.strokeStyle=s%2?'#2c2f35':'#3b3f46'; tx.beginPath(); tx.moveTo(x,s%2?27:22); tx.lineTo(x,33); tx.stroke(); if(s%2===0){ tx.fillStyle='#8d939c'; tx.textAlign='center'; tx.fillText((s/2)+'s',x,11); } }
+  tx.strokeStyle='#33373d'; tx.beginPath(); tx.moveTo(0,33.5); tx.lineTo(W,33.5); tx.stroke();
+  const rows=tlRows(); let y=34; // 刻度區高 34：數字上方與數字到刻度之間各留約 7px
   rows.forEach((r,ri)=>{
     const cy=y+12;
     tx.textAlign='left'; tx.fillStyle='#dde0e5'; tx.font=(r.type==='layer'?'600 12px':'12px')+' "Noto Sans TC",sans-serif';
