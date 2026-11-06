@@ -92,7 +92,26 @@ code,.mono{font-family:var(--mono)}
 .tog input{accent-color:var(--accent)}
 
 /* ---------- 時間軸 ---------- */
-.transport{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.transport{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:nowrap;white-space:nowrap}
+.transport .tbtn,.transport .spd{flex:none}
+.p-tl{container-type:inline-size}
+/* 時間軸面板較窄時（手機、平板雙欄）：縮小按鈕與文字，讓整列維持一行 */
+@container (max-width:500px){
+  .transport{gap:4px;padding:8px 10px}
+  .transport .tbtn{width:30px;height:30px}
+  .transport .tbtn.play{width:38px}
+  .transport .tc{width:128px;margin:0 2px;font-size:13.5px}
+  .transport .tc small{font-size:10px}
+  .transport .spdtxt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .transport select{padding:0 2px;height:30px}
+}
+@container (max-width:360px){
+  .transport{gap:3px;padding:8px 8px}
+  .transport .tbtn{width:28px}
+  .transport .tbtn.play{width:34px}
+  .transport .tc{width:114px;font-size:12.5px}
+  .transport .tc small{font-size:9.5px}
+}
 .tbtn{width:34px;height:30px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);display:grid;place-items:center}
 .tbtn svg{width:14px;height:14px;fill:var(--ink)}
 .tbtn.play{width:44px;background:#21364f;border-color:#2f5279}
@@ -196,7 +215,6 @@ code,.mono{font-family:var(--mono)}
   .doc h2{font-size:19px}
   .prow{grid-template-columns:80px 1fr 66px}
   .tc{width:150px;margin:0 4px}
-  .transport .tog{flex-basis:100%}
 }
 
 .code-wrap pre#hl{position:relative;z-index:1}
@@ -253,7 +271,7 @@ code,.mono{font-family:var(--mono)}
         <button class="tbtn" id="bNext" aria-label="下一格"><svg viewBox="0 0 14 14"><path d="M4 2v10l7-5z"/></svg></button>
         <div class="tc" id="tc">0:00:00:00<small>0.00 秒</small></div>
         <span style="flex:1"></span>
-        <label class="tog" for="speed">速度
+        <label class="tog spd" for="speed"><span class="spdtxt">速度</span>
         <select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
       </div>
       <canvas id="tl" aria-label="時間軸，可拖曳改變時間"></canvas>
