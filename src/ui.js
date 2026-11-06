@@ -482,7 +482,7 @@ const Sync=(function(){
     if(JSON.stringify(payload())===before) return;
     const id=location.hash.slice(1);
     if(document.activeElement===$('#code')){ renderSide(); return; } // 正在編輯時不打斷，只更新清單
-    load(id||'wiggle-basic');
+    load(id||'time-rotate');
   }
   function merge(d){ // 第一次連線：雲端與本機合併，兩邊都不遺失
     const ids=new Set((d.saved||[]).map(x=>x.id));
@@ -542,6 +542,6 @@ if(window.ResizeObserver){ let t=null; new ResizeObserver(()=>{ clearTimeout(t);
 
 setPlaying(S.playing);
 Sync.init();
-load(location.hash.slice(1)||'wiggle-basic');
+load(location.hash.slice(1)||'time-rotate');
 requestAnimationFrame(frame);
 })();
