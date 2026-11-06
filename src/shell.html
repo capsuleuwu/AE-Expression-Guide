@@ -142,6 +142,24 @@ code,.mono{font-family:var(--mono)}
 .edbar .btn{height:28px;padding:0 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);font-size:12.5px;display:inline-flex;align-items:center;gap:5px}
 .edbar .btn:hover{border-color:#4a4f57}
 .edbar select{height:28px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);padding:0 6px;font-size:12.5px}
+.p-code{container-type:inline-size}
+.edbar{flex-wrap:nowrap;white-space:nowrap}
+.edbar > *{flex:none}
+.edbar .sp{flex:1 1 0;min-width:0}
+.edbar select{flex:0 1 auto;min-width:0;max-width:150px}
+/* 編輯器面板較窄時：縮小按鈕，讓標題、屬性選單與按鈕維持一行 */
+@container (max-width:430px){
+  .edbar{gap:5px;padding:8px 10px}
+  .edbar .btn{padding:0 8px;font-size:12px}
+  .edbar select{max-width:118px;padding:0 4px;font-size:12px}
+  .edbar .chip{padding:1px 6px;font-size:11px}
+}
+@container (max-width:350px){
+  .edbar{gap:4px;padding:8px}
+  .edbar .btn{padding:0 6px}
+  .edbar select{max-width:96px}
+  .edbar h3{font-size:12px}
+}
 .code-wrap{position:relative;background:#121316;border-radius:0 0 var(--r) var(--r)}
 .code-wrap pre,.code-wrap textarea{margin:0;padding:12px 14px;font:13px/1.65 var(--mono);white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;tab-size:2;letter-spacing:0}
 .code-wrap pre{pointer-events:none;color:var(--ink);min-height:150px}

@@ -102,6 +102,7 @@ function renderDoc(){
   if(ex.how&&ex.how.length){ const ol=document.createElement('ol'); for(const s of ex.how){ const li=document.createElement('li'); li.textContent=s; ol.append(li); } more.append(ol); }
   if(ex.tip){ const t=document.createElement('div'); t.className='tip'; t.textContent=ex.tip; more.append(t); }
   const pc=$('#propChip'); pc.innerHTML='<span class="chip expr"></span>'; pc.firstChild.textContent=AE.PROP_INFO[S.prop].label;
+  pc.hidden=!!ex.lab; // 實驗室已有屬性選單，不重複顯示
   updateModChip();
 }
 
