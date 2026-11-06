@@ -121,6 +121,7 @@ code,.mono{font-family:var(--mono)}
 .tc small{display:block;font:11px var(--mono);color:var(--muted)}
 .transport select{height:30px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);padding:0 6px}
 #tl{display:block;width:100%;touch-action:none;cursor:ew-resize}
+.p-tl{overflow:hidden} /* 時間軸畫布是直角，裁切到面板圓角內，避免蓋住下方左右邊框 */
 
 /* ---------- 圖表 ---------- */
 #graph{display:block;width:100%;height:170px}
