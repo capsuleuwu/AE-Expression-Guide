@@ -30,7 +30,7 @@ function renderSide(){
         side.querySelectorAll('.cat').forEach(c=>{ c.classList.add('closed'); const hb=c.querySelector('.cat-h'); if(hb) hb.setAttribute('aria-expanded','false'); });
         S.closed={}; groups.forEach(x=>S.closed[x.cat.id]=true); }
       wrap.classList.toggle('closed',!opening); S.closed[g.cat.id]=!opening; h.setAttribute('aria-expanded',String(opening)); };
-    const en=document.createElement('span'); en.className='cat-en'; en.textContent=g.cat.en;
+    const en=document.createElement('span'); en.className='cat-en'; en.textContent=g.cat.en; en.onclick=()=>h.click(); // 點英文小註記也能展開／收起
     const list=document.createElement('div'); list.className='items';
     for(const it of g.items){
       const b=document.createElement('button'); b.type='button'; b.className='item';
