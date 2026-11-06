@@ -96,7 +96,8 @@ code,.mono{font-family:var(--mono)}
 .tbtn{width:34px;height:30px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);display:grid;place-items:center}
 .tbtn svg{width:14px;height:14px;fill:var(--ink)}
 .tbtn.play{width:44px;background:#21364f;border-color:#2f5279}
-.tc{font:600 15px var(--mono);color:var(--accent);font-variant-numeric:tabular-nums;margin:0 8px;min-width:104px}
+.tc{flex:none;width:168px;font:600 15px var(--mono);color:var(--accent);font-variant-numeric:tabular-nums;margin:0 8px;white-space:nowrap}
+.tc small{white-space:nowrap}
 .tc small{display:block;font:11px var(--mono);color:var(--muted)}
 .transport select{height:30px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);padding:0 6px}
 #tl{display:block;width:100%;touch-action:none;cursor:ew-resize}
@@ -194,7 +195,8 @@ code,.mono{font-family:var(--mono)}
   .brand small{display:none}
   .doc h2{font-size:19px}
   .prow{grid-template-columns:80px 1fr 66px}
-  .tc{min-width:92px;margin:0 4px}
+  .tc{width:150px;margin:0 4px}
+  .transport .tog{flex-basis:100%}
 }
 
 .code-wrap pre#hl{position:relative;z-index:1}
