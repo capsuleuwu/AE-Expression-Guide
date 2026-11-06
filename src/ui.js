@@ -310,7 +310,7 @@ function tlRows(){
   if(L.markers.length) rows.push({type:'marker',L});
   return rows;
 }
-function tlHeight(){ return 26+tlRows().length*24+8; }
+function tlHeight(){ return 26+tlRows().length*24+4; }
 function drawTL(){
   const W=tl.width/DPR, H=tl.height/DPR; tx.setTransform(DPR,0,0,DPR,0,0);
   tx.fillStyle='#1d1f23'; tx.fillRect(0,0,W,H);
@@ -321,7 +321,7 @@ function drawTL(){
   for(let s=0;s<=COMP.dur*2;s++){ const x=X(s/2); tx.strokeStyle=s%2?'#2c2f35':'#3b3f46'; tx.beginPath(); tx.moveTo(x,s%2?18:12); tx.lineTo(x,24); tx.stroke(); if(s%2===0){ tx.fillStyle='#8d939c'; tx.textAlign='center'; tx.fillText((s/2)+'s',x,8); } }
   tx.strokeStyle='#33373d'; tx.beginPath(); tx.moveTo(0,25.5); tx.lineTo(W,25.5); tx.stroke();
   const rows=tlRows(); let y=26;
-  for(const r of rows){
+  rows.forEach((r,ri)=>{
     const cy=y+12;
     tx.textAlign='left'; tx.fillStyle='#dde0e5'; tx.font=(r.type==='layer'?'600 12px':'12px')+' "Noto Sans TC",sans-serif';
     if(r.type==='layer'){ tx.fillText(fit(r.L.name,left-14),8,cy); const c=r.L.props.color.base; tx.fillStyle=rgba(c,0.28); tx.fillRect(X(r.L.inPoint),y+5,X(r.L.outPoint)-X(r.L.inPoint),14); tx.fillStyle=rgba(c,0.9); tx.fillRect(X(r.L.inPoint),y+5,3,14); tx.fillRect(X(r.L.outPoint)-3,y+5,3,14); }
@@ -329,8 +329,8 @@ function drawTL(){
       if(P.expr){ tx.strokeStyle='rgba(242,166,64,.35)'; tx.setLineDash([3,4]); tx.beginPath(); tx.moveTo(left,cy); tx.lineTo(W-right,cy); tx.stroke(); tx.setLineDash([]); }
       for(const k of P.keys){ const x=X(k.t); tx.save(); tx.translate(x,cy); tx.rotate(Math.PI/4); tx.fillStyle=k.e==='linear'?'#dde0e5':'#a9cdf2'; tx.fillRect(-4.5,-4.5,9,9); tx.restore(); } }
     else { tx.fillStyle='#b9bec6'; tx.fillText('標記',14,cy); for(const m of r.L.markers){ const x=X(m.time); tx.fillStyle='#62c48a'; tx.beginPath(); tx.moveTo(x-6,y+5); tx.lineTo(x+6,y+5); tx.lineTo(x,y+15); tx.closePath(); tx.fill(); tx.fillStyle='#8d939c'; tx.font='11px "JetBrains Mono",monospace'; tx.fillText(m.comment,x+8,cy); } }
-    y+=24; tx.strokeStyle='#26292e'; tx.beginPath(); tx.moveTo(0,y+.5); tx.lineTo(W,y+.5); tx.stroke();
-  }
+    y+=24; if(ri<rows.length-1){ tx.strokeStyle='#26292e'; tx.beginPath(); tx.moveTo(0,y+.5); tx.lineTo(W,y+.5); tx.stroke(); } // 最後一列下方不畫分隔線
+  });
   const px=X(S.t); tx.strokeStyle='#4ea4f2'; tx.lineWidth=1.5; tx.beginPath(); tx.moveTo(px,4); tx.lineTo(px,H); tx.stroke(); tx.lineWidth=1;
   tx.fillStyle='#4ea4f2'; tx.beginPath(); tx.moveTo(px-6,0); tx.lineTo(px+6,0); tx.lineTo(px+6,8); tx.lineTo(px,13); tx.lineTo(px-6,8); tx.closePath(); tx.fill();
   tl._map={left,tw};
