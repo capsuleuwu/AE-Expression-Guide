@@ -50,6 +50,12 @@ function renderSide(){
   if(!total){ const e=document.createElement('div'); e.className='empty-search'; e.textContent='沒有符合「'+q+'」的表達式，試試 wiggle、loop、文字、顏色。'; side.append(e); }
 }
 const exById=id=>EX.find(e=>e.id===id);
+// ---------- 手機版 wiggle 輕量模式 ----------
+// 只在手機寬度、且表達式用到 wiggle 時啟用：拖動滑桿時每個畫面最多更新一次、
+// 放開後才重算數值圖表、延後存檔、預設關閉運動軌跡。其他頁面與電腦版行為不變。
+const MOBILE=matchMedia('(max-width:820px)');
+function lite(){ return MOBILE.matches && /\bwiggle\s*\(/.test(S.code||''); }
+let liteSaveT=null;
 
 // ---------- 切換範例 ----------
 function go(id){ if(location.hash!=='#'+id){ location.hash=id; } else load(id); }
@@ -66,6 +72,7 @@ function load(id){
   $('#code').value=S.code;
   renderDoc(); renderHL(); renderParams(true); renderEffects(); renderSide();
   $('#trailTog').parentElement.style.display = ex.trail ? '' : 'none';
+  S.trail = lite() ? false : (S.trailPref!==false); $('#trailTog').checked=S.trail; // 手機 wiggle 預設關閉軌跡（可手動開啟）
   const lp=$('#labProp'); lp.hidden=!ex.lab; if(ex.lab) lp.value=S.prop;
   $('#savebar').classList.remove('show');
   S.t = Math.min(S.t, COMP.dur-1e-6); S.graphDirty=true; S.dirty=true; resizeAll();
@@ -78,14 +85,15 @@ function codeKey(){ return S.ex.id+(S.ex.lab?':'+S.prop:''); }
 function setCode(code,fromEditor){
   S.code=code;
   for(const L of userLayers()) L.props[S.prop].expr=code;
-  if(!S.saved){ if(code===defaultCode()) delete S.codes[codeKey()]; else S.codes[codeKey()]=code; store.set('codes',S.codes); }
+  if(!S.saved){ if(code===defaultCode()) delete S.codes[codeKey()]; else S.codes[codeKey()]=code;
+    if(lite()){ clearTimeout(liteSaveT); liteSaveT=setTimeout(()=>store.set('codes',S.codes),500); } else store.set('codes',S.codes); }
   else { S.saved.code=code; store.set('saved',S.savedList); }
   Sync.dirty();
   if(!fromEditor){ const ta=$('#code'); const ss=ta.selectionStart, se=ta.selectionEnd; ta.value=code; try{ ta.setSelectionRange(ss,se); }catch(e){} }
   renderHL(); renderParams(false); updateModChip();
   S.graphDirty=true; S.dirty=true;
 }
-function updateModChip(){ const m=$('#modChip'); m.innerHTML=''; if(S.code!==defaultCode()){ m.innerHTML='<span class="chip mod">已修改</span>'; } }
+function updateModChip(){ const m=$('#modChip'); const mod=S.code!==defaultCode(); if(lite() && m.dataset.mod===String(mod)) return; m.dataset.mod=String(mod); m.innerHTML=''; if(mod){ m.innerHTML='<span class="chip mod">已修改</span>'; } }
 
 // ---------- 說明 ----------
 function renderDoc(){
@@ -154,8 +162,11 @@ function renderParams(force){
     const apply=(v)=>{ v=+v; if(isNaN(v)) return; const cur=parseParams(S.code)[i]; if(!cur) return;
       const lines=S.code.split('\n'); lines[cur.line]=lines[cur.line].replace(PRE,(all,a,nm,num,rest)=>a+v.toFixed(decimals(p.step)).replace(/^-0$/,'0')+rest);
       setCode(lines.join('\n')); };
-    r.addEventListener('input',()=>{ dragging=row; n.value=r.value; apply(r.value); });
-    r.addEventListener('change',()=>{ dragging=null; });
+    let pend=null, raf=0;
+    r.addEventListener('input',()=>{ dragging=row; n.value=r.value;
+      if(!lite()){ apply(r.value); return; }
+      S.liteDrag=true; pend=r.value; if(!raf) raf=requestAnimationFrame(()=>{ raf=0; apply(pend); }); });
+    r.addEventListener('change',()=>{ dragging=null; if(S.liteDrag){ S.liteDrag=false; S.graphDirty=true; S.dirty=true; } });
     n.addEventListener('input',()=>{ if(n.value!=='') { r.value=n.value; apply(n.value); } });
     box.append(row);
   });
@@ -398,11 +409,11 @@ let lastTs=null, lastTc='';
 function frame(ts){
   if(lastTs==null) lastTs=ts; const dt=Math.min(0.1,(ts-lastTs)/1000); lastTs=ts;
   if(S.playing){ S.t+=dt*S.speed; if(S.t>=COMP.dur) S.t%=COMP.dur; S.dirty=true; }
-  if(S.graphDirty){ S.graphDirty=false; const h=tlHeight(); if(Math.abs(tl.height/DPR-h)>1) fitCanvas(tl,h); computeGraph(); }
+  if(S.graphDirty && !(S.liteDrag && lite())){ S.graphDirty=false; const h=tlHeight(); if(Math.abs(tl.height/DPR-h)>1) fitCanvas(tl,h); computeGraph(); }
   if(S.dirty){ S.dirty=false;
     const tf=Math.floor(S.t*COMP.fps+1e-6); const tcs=tf+'';
     if(tcs!==lastTc){ lastTc=tcs; const f=tf%COMP.fps, s=Math.floor(tf/COMP.fps); $('#tc').innerHTML='0:00:'+String(s).padStart(2,'0')+':'+String(f).padStart(2,'0')+'<small>'+S.t.toFixed(2)+' 秒 · 第 '+tf+' 格</small>'; }
-    drawComp(); drawTL(); drawGraph(); updateReadout(); }
+    drawComp(); if(S.liteDrag && lite()){ S.liteSkipped=true; } else { drawTL(); drawGraph(); updateReadout(); S.liteSkipped=false; } }
   requestAnimationFrame(frame);
 }
 
@@ -419,7 +430,7 @@ $('#bPlay').onclick=()=>setPlaying(!S.playing);
 $('#bStart').onclick=()=>{ S.t=0; S.dirty=true; };
 $('#bPrev').onclick=()=>step(-1); $('#bNext').onclick=()=>step(1);
 $('#speed').onchange=e=>{ S.speed=+e.target.value; };
-$('#trailTog').onchange=e=>{ S.trail=e.target.checked; S.dirty=true; };
+$('#trailTog').onchange=e=>{ S.trail=e.target.checked; if(!lite()) S.trailPref=S.trail; S.dirty=true; };
 $('#search').addEventListener('input',renderSide);
 // 側欄抽屜：開啟時鎖住頁面捲動，避免背景與頂列分離
 let lockY=0;
