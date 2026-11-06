@@ -206,10 +206,17 @@ const comp=$('#comp'), cx=comp.getContext('2d');
 const tl=$('#tl'), tx=tl.getContext('2d');
 const gr=$('#graph'), gx=gr.getContext('2d');
 let DPR=1;
-function fitCanvas(c,h){ const w=c.clientWidth||300; c.width=Math.round(w*DPR); c.height=Math.round((h||c.clientHeight)*DPR); if(h) c.style.height=h+'px'; }
-function resizeAll(){ DPR=Math.min(2,window.devicePixelRatio||1);
-  const w=comp.clientWidth||600; comp.width=Math.round(w*DPR); comp.height=Math.round(w*9/16*DPR);
-  fitCanvas(tl,tlHeight()); fitCanvas(gr,170); S.graphDirty=true; S.dirty=true; }
+// 只有尺寸真的改變時才重新配置畫布：iOS Safari 捲動時網址列伸縮會一直觸發 resize，
+// 反覆重建畫布會讓記憶體暴增，導致「重複發生問題」並自動重新載入。
+function setCanvasSize(c,w,h){ w=Math.max(1,Math.round(w)); h=Math.max(1,Math.round(h)); if(c.width===w && c.height===h) return false; c.width=w; c.height=h; return true; }
+function fitCanvas(c,h){ const w=c.clientWidth||300; if(h && c.style.height!==h+'px') c.style.height=h+'px'; return setCanvasSize(c,w*DPR,(h||c.clientHeight)*DPR); }
+const SMALL=matchMedia('(max-width:820px)');
+function resizeAll(){
+  DPR=Math.min(SMALL.matches?1.5:2, window.devicePixelRatio||1); // 手機降低解析度，省下約一半的畫布記憶體
+  const w=comp.clientWidth||600;
+  const a=setCanvasSize(comp,w*DPR,w*9/16*DPR), b=fitCanvas(tl,tlHeight()), c=fitCanvas(gr,170);
+  if(b||c) S.graphDirty=true;
+  if(a||b||c) S.dirty=true; }
 const rgba=(c,a)=>'rgba('+[0,1,2].map(i=>Math.round(Math.min(1,Math.max(0,c[i]))*255)).join(',')+','+Math.min(1,Math.max(0,(c[3]==null?1:c[3])*(a==null?1:a)))+')';
 
 function shapePath(ctx,shape,w,h){
@@ -238,7 +245,7 @@ function drawLayer(ctx,L,t){
   ctx.translate(pos[0],pos[1]); ctx.rotate(rot*Math.PI/180); ctx.scale(sc[0]/100,sc[1]/100); ctx.translate(-an[0],-an[1]);
   if(L.shape==='animtext'){
     const chars=Array.from(L.spec.text||''); const n=chars.length;
-    ctx.font='700 '+L.fontSize+'px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.fillStyle=rgba(col);
+    ctx.font='700 '+L.fontSize+'px "PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.fillStyle=rgba(col);
     const ws=chars.map(c=>ctx.measureText(c).width); const tot=ws.reduce((a,b)=>a+b,0); let x=-tot/2; const base=L.fontSize*0.36;
     chars.forEach((c,i)=>{ const a=AE.evalProp(L.props.amount,t,{textIndex:i+1,textTotal:n}); const k=L.animScale;
       const fx=(100+(k-100)*a[0]/100)/100, fy=(100+(k-100)*a[1]/100)/100; const cxp=x+ws[i]/2;
@@ -246,7 +253,7 @@ function drawLayer(ctx,L,t){
       x+=ws[i]; });
   } else if(L.shape==='text'){
     const s=String(ev(L,'sourceText',t)); const lines=s.split(/\r\n|\r|\n/);
-    ctx.font='700 '+L.fontSize+'px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=rgba(col);
+    ctx.font='700 '+L.fontSize+'px "PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=rgba(col);
     const lh=L.fontSize*1.25; lines.forEach((ln,i)=>ctx.fillText(ln,0,(i-(lines.length-1)/2)*lh));
   } else if(L.shape==='path'){ drawPathValue(ctx,ev(L,'path',t),col,L.stroke); }
   else if(L.shape==='null'){ ctx.strokeStyle=rgba(col); ctx.lineWidth=4; ctx.strokeRect(-w/2,-w/2,w,w); ctx.beginPath(); ctx.moveTo(-w*0.8,0); ctx.lineTo(w*0.8,0); ctx.moveTo(0,-w*0.8); ctx.lineTo(0,w*0.8); ctx.stroke(); }
@@ -397,7 +404,8 @@ function step(n){ setPlaying(false); S.t=((Math.round(S.t*COMP.fps)+n)%(COMP.dur
 let lastTs=null, lastTc='';
 function frame(ts){
   if(lastTs==null) lastTs=ts; const dt=Math.min(0.1,(ts-lastTs)/1000); lastTs=ts;
-  if(S.playing){ S.t+=dt*S.speed; if(S.t>=COMP.dur) S.t%=COMP.dur; S.dirty=true; }
+  if(document.hidden){ requestAnimationFrame(frame); return; }
+  if(S.playing){ S.t+=dt*S.speed; if(S.t>=COMP.dur) S.t%=COMP.dur; if(compVisible) S.dirty=true; }
   if(S.graphDirty){ S.graphDirty=false; const h=tlHeight(); if(Math.abs(tl.height/DPR-h)>1) fitCanvas(tl,h); computeGraph(); }
   if(S.dirty){ S.dirty=false;
     const tf=Math.floor(S.t*COMP.fps+1e-6); const tcs=tf+'';
@@ -431,7 +439,7 @@ function setDrawer(open){
   $('#menuBtn').setAttribute('aria-expanded',String(open));
 }
 function measureTop(){ document.documentElement.style.setProperty('--top-h',$('.top').offsetHeight+'px'); }
-measureTop(); window.addEventListener('resize',measureTop);
+measureTop(); window.addEventListener('resize',()=>{ const h=$('.top').offsetHeight; if(h+'px'!==document.documentElement.style.getPropertyValue('--top-h')) measureTop(); });
 $('#menuBtn').onclick=()=>setDrawer(!document.body.classList.contains('drawer'));
 $('#scrim').onclick=()=>setDrawer(false);
 $('#scrim').addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
@@ -455,7 +463,7 @@ const lp=$('#labProp');
 for(const k in AE.PROP_INFO){ if(k==='anchorPoint'||k==='amount') continue; const o=document.createElement('option'); o.value=k; o.textContent=AE.PROP_INFO[k].label; lp.append(o); }
 lp.onchange=()=>{ S.labProp=lp.value; store.set('labProp',S.labProp); Sync.dirty(); S.saved=null; load('lab'); };
 window.addEventListener('hashchange',()=>load(location.hash.slice(1)));
-let rzT=null; window.addEventListener('resize',()=>{ clearTimeout(rzT); rzT=setTimeout(resizeAll,80); });
+let rzT=null, lastW=window.innerWidth; window.addEventListener('resize',()=>{ if(window.innerWidth===lastW) return; lastW=window.innerWidth; clearTimeout(rzT); rzT=setTimeout(resizeAll,120); }); // 只在寬度改變時處理（忽略 iOS 網址列伸縮造成的高度變化）
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ S.dirty=true; });
 
 
@@ -533,7 +541,10 @@ const Sync=(function(){
     ph.append(b);
   });
 })();
-if(window.ResizeObserver){ let t=null; new ResizeObserver(()=>{ clearTimeout(t); t=setTimeout(resizeAll,60); }).observe(document.querySelector('.p-comp')); }
+if(window.ResizeObserver){ let t=null, ow=0; new ResizeObserver(es=>{ const w=Math.round(es[0].contentRect.width); if(w===ow) return; ow=w; clearTimeout(t); t=setTimeout(resizeAll,80); }).observe(document.querySelector('.comp-wrap')); }
+// 預覽不在畫面上或分頁在背景時暫停繪製，降低手機的 CPU 與記憶體負擔
+let compVisible=true;
+if(window.IntersectionObserver){ new IntersectionObserver(es=>{ compVisible=es[0].isIntersecting; if(compVisible) S.dirty=true; }).observe(comp); }
 
 setPlaying(S.playing);
 Sync.init();
