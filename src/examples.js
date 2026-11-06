@@ -554,7 +554,7 @@ for (i = 0; i < points * 2; i++) {
 createPath(pts, [], [], true)`,
   layer:{ shape:'path', color:C.amber } },
 
-{ id:'path-inertia', cat:'path', name:'形狀變化與慣性回彈', sig:'points(t) · createPath()', prop:'path',
+{ id:'path-inertia', cat:'path', name:'慣性回彈', sig:'points(t) · createPath()', prop:'path',
   desc:'路徑有關鍵影格從形狀 A 變成 B 時，在停下的瞬間讓每個頂點依照自己的進場速度衝過頭再回彈，形狀會像果凍一樣晃一下再定型。',
   how:['在「路徑」上設兩個以上的關鍵影格（A 形狀 → B 形狀），建議用線性','對同一個「路徑」屬性套用表達式','位置、縮放、旋轉請用「關鍵影格與物理 › 慣性回彈」那一版'],
   tip:'路徑不能直接做 value + 速度 的運算，所以這裡用 points() 取出每個頂點，各自算速度與回彈，再用 createPath() 組回去。需要 AE CC 2018 以上。',
