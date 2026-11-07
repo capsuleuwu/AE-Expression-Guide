@@ -326,7 +326,7 @@ function drawTL(){
   // 屬性列、標記列的文字與上方圖層名稱的中心對齊
   // 左側欄所有文字（圖層名稱、屬性、標記）都置中在左側欄中間
   const fontOf=r=>(r.type==='layer'?'600 12px':'12px')+' "Noto Sans TC",sans-serif';
-  const labelOf=r=>{ tx.font=fontOf(r); return r.type==='layer'? fit(r.L.name,left-14) : r.type==='prop'? fit(r.P.label.replace('填色 › ',''),left-14) : '標記'; };
+  const labelOf=r=>{ tx.font=fontOf(r); return r.type==='layer'? fit(r.L.name,left-14) : r.type==='prop'? fit(r.P.label.split(' › ').pop(),left-14) : '標記'; };
   let maxW=0; rows.forEach(r=>{ const s=labelOf(r); maxW=Math.max(maxW,tx.measureText(s).width); });
   const colCX=Math.max(4+maxW/2, Math.min((left-2)/2, left-6-maxW/2)); // 以左側欄的中心為軸；最寬的文字放不下時才往左移
   const atCenter=s=>colCX-tx.measureText(s).width/2; // 刻度區高 34：數字上方與數字到刻度之間各留約 7px
