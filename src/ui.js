@@ -140,7 +140,7 @@ function renderParams(force){
   // 有「製作方式」的範例：這個面板改為顯示 AE 製作步驟
   const mk=S.ex&&S.ex.make;
   $('#paramsTitle').textContent=mk?'製作方式':'參數調整';
-  $('#paramsDesc').textContent=mk?'在 After Effects 中做出這個效果的步驟':'拖動滑桿會直接改寫表達式中的數字';
+  $('#paramsDesc').textContent=mk?'':'拖動滑桿會直接改寫表達式中的數字';
   if(mk){ const box=$('#params'); if(S.paramSig==='make:'+S.ex.id) return; S.paramSig='make:'+S.ex.id; box.innerHTML='';
     const ol=document.createElement('ol'); ol.className='make'; for(const t of mk){ const li=document.createElement('li'); li.textContent=t; ol.append(li); } box.append(ol); return; }
   const ps=parseParams(S.code); const sig=ps.map(p=>p.name+p.label+p.min+p.max+p.step).join('|');
