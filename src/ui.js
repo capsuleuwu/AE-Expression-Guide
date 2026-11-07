@@ -280,9 +280,10 @@ function fmtVal(v,prop){
   const d=AE.PROP_INFO[prop].dims;
   if(d==='text') return '"'+String(v).replace(/\r\n|\r|\n/g,'⏎')+'"';
   if(d==='path') return 'createPath('+(v.points?v.points.length:0)+' 個點'+(v.closed?'，封閉':'，開放')+')';
-  if(d===1) return (+v).toFixed(2);
-  if(d===4) return '['+v.map(x=>(+x).toFixed(3)).join(', ')+']';
-  return v.map(x=>(+x).toFixed(1)).join(', ');
+  const fx=(x,n)=>{ const s=(+x).toFixed(n); return /^-0\.?0*$/.test(s)? s.slice(1) : s; }; // 不顯示 -0.0
+  if(d===1) return fx(v,2);
+  if(d===4) return '['+v.map(x=>fx(x,3)).join(', ')+']';
+  return v.map(x=>fx(x,1)).join(', ');
 }
 function updateReadout(){
   const L=userLayers()[0]; if(!L) return;
@@ -290,9 +291,10 @@ function updateReadout(){
   const v=isAmt?AE.evalProp(P,S.t,{textIndex:1,textTotal:nCh}):AE.evalProp(P,S.t);
   const s=L.name+'|'+fmtVal(v,S.prop);
   if(s!==lastRead){ lastRead=s; const r=$('#readout'); r.innerHTML='';
-    const a=document.createElement('span'); a.textContent=L.name+' › '+P.label+(isAmt?'（第 1 個字，共 '+nCh+' 字）':'')+' ='; const b=document.createElement('b'); b.textContent=fmtVal(v,S.prop); r.append(a,b);
-    if(S.prop==='color'){ const sw=document.createElement('span'); sw.className='swatch'; sw.style.background=rgba(v); r.append(sw); }
-    if(userLayers().length>1){ const c=document.createElement('span'); c.className='chip'; c.textContent='共 '+userLayers().length+' 個複本，顯示第 1 個'; r.append(c); } }
+    // 只顯示「屬性：數值」，例如 旋轉：12.34
+    const a=document.createElement('span'); a.className='rk'; a.textContent=P.label.split(' › ').pop()+'：';
+    const b=document.createElement('b'); b.textContent=fmtVal(v,S.prop); r.append(a,b);
+    if(S.prop==='color'){ const sw=document.createElement('span'); sw.className='swatch'; sw.style.background=rgba(v); r.append(sw); } }
   let err=null; for(const U of userLayers()){ if(U.props[S.prop].err){ err=U.props[S.prop].err; break; } }
   if(!err){ for(const X of S.scene.layers){ for(const k in X.props){ if(X.props[k].err){ err=X.props[k].err; break; } } if(err) break; } }
   const es=err?JSON.stringify(err):'';

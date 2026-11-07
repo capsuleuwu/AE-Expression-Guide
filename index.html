@@ -82,6 +82,9 @@ code,.mono{font-family:var(--mono)}
 #comp{display:block;width:100%;aspect-ratio:16/9;height:auto}
 .readout{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-top:1px solid var(--line);font:12.5px var(--mono);color:var(--muted)}
 .readout b{color:var(--expr);font-weight:600;word-break:break-all}
+.readout{gap:0}
+.readout .rk{color:var(--expr)}
+.readout .swatch{margin-left:8px}
 .swatch{width:14px;height:14px;border-radius:3px;border:1px solid #fff3;display:inline-block}
 .err{display:none;margin:0 12px 10px;padding:8px 10px;border-radius:6px;background:#3a2f14;border:1px solid #6d5720;color:#f5dc96;font-size:13px;gap:8px;align-items:flex-start}
 .err.show{display:flex}
@@ -237,8 +240,8 @@ code,.mono{font-family:var(--mono)}
   /* 讀值列：手機版維持一行，空間不夠時名稱先縮短並以 … 結尾 */
   .readout{flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
   .readout > *{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .readout > span:first-child{flex:0 100 auto;min-width:4.5em}
-  .readout > b{flex:0 0 auto;max-width:calc(100% - 4.5em - 8px);word-break:normal}
+  .readout > .rk{flex:none}
+  .readout > b{flex:0 1 auto;word-break:normal}
   .readout > .swatch{flex:none}
   .readout > .chip{display:none}
   .prow{grid-template-columns:80px 1fr 66px}
@@ -1919,9 +1922,10 @@ function fmtVal(v,prop){
   const d=AE.PROP_INFO[prop].dims;
   if(d==='text') return '"'+String(v).replace(/\r\n|\r|\n/g,'⏎')+'"';
   if(d==='path') return 'createPath('+(v.points?v.points.length:0)+' 個點'+(v.closed?'，封閉':'，開放')+')';
-  if(d===1) return (+v).toFixed(2);
-  if(d===4) return '['+v.map(x=>(+x).toFixed(3)).join(', ')+']';
-  return v.map(x=>(+x).toFixed(1)).join(', ');
+  const fx=(x,n)=>{ const s=(+x).toFixed(n); return /^-0\.?0*$/.test(s)? s.slice(1) : s; }; // 不顯示 -0.0
+  if(d===1) return fx(v,2);
+  if(d===4) return '['+v.map(x=>fx(x,3)).join(', ')+']';
+  return v.map(x=>fx(x,1)).join(', ');
 }
 function updateReadout(){
   const L=userLayers()[0]; if(!L) return;
@@ -1929,9 +1933,10 @@ function updateReadout(){
   const v=isAmt?AE.evalProp(P,S.t,{textIndex:1,textTotal:nCh}):AE.evalProp(P,S.t);
   const s=L.name+'|'+fmtVal(v,S.prop);
   if(s!==lastRead){ lastRead=s; const r=$('#readout'); r.innerHTML='';
-    const a=document.createElement('span'); a.textContent=L.name+' › '+P.label+(isAmt?'（第 1 個字，共 '+nCh+' 字）':'')+' ='; const b=document.createElement('b'); b.textContent=fmtVal(v,S.prop); r.append(a,b);
-    if(S.prop==='color'){ const sw=document.createElement('span'); sw.className='swatch'; sw.style.background=rgba(v); r.append(sw); }
-    if(userLayers().length>1){ const c=document.createElement('span'); c.className='chip'; c.textContent='共 '+userLayers().length+' 個複本，顯示第 1 個'; r.append(c); } }
+    // 只顯示「屬性：數值」，例如 旋轉：12.34
+    const a=document.createElement('span'); a.className='rk'; a.textContent=P.label.split(' › ').pop()+'：';
+    const b=document.createElement('b'); b.textContent=fmtVal(v,S.prop); r.append(a,b);
+    if(S.prop==='color'){ const sw=document.createElement('span'); sw.className='swatch'; sw.style.background=rgba(v); r.append(sw); } }
   let err=null; for(const U of userLayers()){ if(U.props[S.prop].err){ err=U.props[S.prop].err; break; } }
   if(!err){ for(const X of S.scene.layers){ for(const k in X.props){ if(X.props[k].err){ err=X.props[k].err; break; } } if(err) break; } }
   const es=err?JSON.stringify(err):'';

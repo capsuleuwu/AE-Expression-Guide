@@ -82,6 +82,9 @@ code,.mono{font-family:var(--mono)}
 #comp{display:block;width:100%;aspect-ratio:16/9;height:auto}
 .readout{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-top:1px solid var(--line);font:12.5px var(--mono);color:var(--muted)}
 .readout b{color:var(--expr);font-weight:600;word-break:break-all}
+.readout{gap:0}
+.readout .rk{color:var(--expr)}
+.readout .swatch{margin-left:8px}
 .swatch{width:14px;height:14px;border-radius:3px;border:1px solid #fff3;display:inline-block}
 .err{display:none;margin:0 12px 10px;padding:8px 10px;border-radius:6px;background:#3a2f14;border:1px solid #6d5720;color:#f5dc96;font-size:13px;gap:8px;align-items:flex-start}
 .err.show{display:flex}
@@ -237,8 +240,8 @@ code,.mono{font-family:var(--mono)}
   /* 讀值列：手機版維持一行，空間不夠時名稱先縮短並以 … 結尾 */
   .readout{flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
   .readout > *{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .readout > span:first-child{flex:0 100 auto;min-width:4.5em}
-  .readout > b{flex:0 0 auto;max-width:calc(100% - 4.5em - 8px);word-break:normal}
+  .readout > .rk{flex:none}
+  .readout > b{flex:0 1 auto;word-break:normal}
   .readout > .swatch{flex:none}
   .readout > .chip{display:none}
   .prow{grid-template-columns:80px 1fr 66px}
