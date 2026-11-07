@@ -336,7 +336,7 @@ code,.mono{font-family:var(--mono)}
       <div class="savebar fold-body" id="savebar"><input id="saveName" aria-label="收藏名稱" placeholder="名稱"><button class="btn pri" id="bSaveOk">儲存到「我的表達式」</button><button class="btn" id="bSaveNo">取消</button></div>
     </section>
     <section class="panel p-make" data-fold="make">
-      <div class="ph"><h3>製作方式</h3></div>
+      <div class="ph"><h3 id="makeTitle">製作方式</h3></div>
       <div class="pb fold-body"><ol class="make" id="make"></ol></div>
     </section>
     <section class="panel p-how" data-fold="how" data-fold-default="closed">
@@ -1748,6 +1748,7 @@ function updateModChip(){ const m=$('#modChip'); m.innerHTML=''; if(S.code!==def
 // ---------- 說明 ----------
 function renderMake(){
   const ol=$('#make'); ol.innerHTML='';
+  $('#makeTitle').textContent=S.ex.lab?'使用方式':'製作方式'; // 自由實驗室顯示「使用方式」
   for(const t of (S.ex.make||[])){ const li=document.createElement('li'); li.textContent=t; ol.append(li); }
   ol.closest('.panel').hidden=!(S.ex.make&&S.ex.make.length);
 }
