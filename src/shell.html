@@ -146,6 +146,8 @@ code,.mono{font-family:var(--mono)}
 /* ---------- 編輯器 ---------- */
 .edbar .btn{height:28px;padding:0 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);font-size:12.5px;display:inline-flex;align-items:center;gap:5px}
 .edbar .btn:hover{border-color:#4a4f57}
+.p-fx .ph .btn{height:28px;padding:0 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);font-size:12.5px;color:var(--ink)}
+.p-fx .ph .btn:hover{border-color:#4a4f57}
 .edbar select{height:28px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);padding:0 6px;font-size:12.5px}
 .p-code{container-type:inline-size}
 .edbar{flex-wrap:nowrap;white-space:nowrap}
@@ -320,7 +322,7 @@ code,.mono{font-family:var(--mono)}
       <div class="pb fold-body"><div class="params" id="params"></div></div>
     </section>
     <section class="panel p-fx" id="fxPanel" data-fold="fx" hidden>
-      <div class="ph"><h3>效果控制</h3><span class="catdesc">表達式用 effect("名稱")("參數") 讀取</span></div>
+      <div class="ph"><h3>效果控制</h3><span class="catdesc">表達式用 effect("名稱")("參數") 讀取</span><span class="sp"></span><button class="btn" id="fxReset" type="button">重設</button></div>
       <div class="pb fold-body" id="fx"></div>
     </section>
     <section class="panel p-code" data-fold="code">

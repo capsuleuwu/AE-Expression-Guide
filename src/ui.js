@@ -163,6 +163,8 @@ function renderParams(force){
 function renderEffects(){
   const L=userLayers()[0]; const fxs=L?L.effects:[]; const panel=$('#fxPanel'), box=$('#fx');
   panel.hidden=!fxs.length; box.innerHTML='';
+  // 記下每個參數的原始值，供「重設」使用
+  fxs.forEach(fx=>fx.params.forEach(p=>{ if(!('_default' in p)) p._default=Array.isArray(p.v)?p.v.slice():p.v; }));
   fxs.forEach((fx,fi)=>{
     const f=document.createElement('div'); f.className='fx';
     f.innerHTML='<div class="fx-h"><span class="fxb">fx</span><span></span></div><div class="pb"></div>';
@@ -197,6 +199,9 @@ function renderEffects(){
     box.append(f);
   });
 }
+$('#fxReset').onclick=()=>{ const L=userLayers()[0]; if(!L) return;
+  L.effects.forEach(fx=>fx.params.forEach(p=>{ if('_default' in p) p.v=Array.isArray(p._default)?p._default.slice():p._default; }));
+  renderEffects(); S.graphDirty=true; S.dirty=true; };
 function toHex(c){ return '#'+c.slice(0,3).map(x=>Math.round(Math.min(1,Math.max(0,x))*255).toString(16).padStart(2,'0')).join(''); }
 
 // ---------- 繪圖 ----------
