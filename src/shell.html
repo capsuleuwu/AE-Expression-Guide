@@ -239,7 +239,7 @@ code,.mono{font-family:var(--mono)}
   body.locked{position:fixed;left:0;right:0;overflow:hidden}
   .app{display:flex;flex-direction:column;align-items:stretch;padding:10px;gap:10px}
   .col{display:contents}
-  .p-doc{order:1}.p-comp{order:2}.p-tl{order:3}.p-params{order:4}.p-fx{order:5}.p-code{order:6}.p-graph{order:7}.p-how{order:8}
+  .p-doc{order:1}.p-comp{order:2}.p-tl{order:3}.p-params{order:4}.p-fx{order:5}.p-code{order:6}.p-make{order:7}.p-graph{order:8}.p-how{order:9}
   .brand small{display:none}
   .doc h2{font-size:19px}
   /* 讀值列：手機版維持一行，空間不夠時名稱先縮短並以 … 結尾 */
@@ -320,7 +320,7 @@ code,.mono{font-family:var(--mono)}
 
   <div class="col">
     <section class="panel p-doc" data-fold="doc"><div class="ph"><h3>範例說明</h3><span class="sp"></span></div><div class="pb doc" id="doc"></div></section>
-    <section class="panel p-params" data-fold="params">
+    <section class="panel p-params" id="paramsPanel" data-fold="params">
       <div class="ph"><h3 id="paramsTitle">參數調整</h3><span class="catdesc" id="paramsDesc">拖動滑桿會直接改寫表達式中的數字</span></div>
       <div class="pb fold-body"><div class="params" id="params"></div></div>
     </section>
@@ -334,6 +334,10 @@ code,.mono{font-family:var(--mono)}
         <button class="btn" id="bCopy">複製</button><button class="btn" id="bReset">重設</button><button class="btn" id="bSave">收藏</button></div>
       <div class="code-wrap fold-body"><pre id="sel" class="sel" aria-hidden="true"></pre><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="表達式編輯器"></textarea></div>
       <div class="savebar fold-body" id="savebar"><input id="saveName" aria-label="收藏名稱" placeholder="名稱"><button class="btn pri" id="bSaveOk">儲存到「我的表達式」</button><button class="btn" id="bSaveNo">取消</button></div>
+    </section>
+    <section class="panel p-make" data-fold="make">
+      <div class="ph"><h3>製作方式</h3></div>
+      <div class="pb fold-body"><ol class="make" id="make"></ol></div>
     </section>
     <section class="panel p-how" data-fold="how" data-fold-default="closed">
       <div class="ph"><h3>在 After Effects 中套用</h3></div>

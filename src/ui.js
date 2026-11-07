@@ -64,7 +64,7 @@ function load(id){
   S.closed={}; S.closed[saved?'mine':ex.cat]=false;
   rebuildScene();
   $('#code').value=S.code;
-  renderDoc(); renderHL(); renderParams(true); renderEffects(); renderSide();
+  renderDoc(); renderMake(); renderHL(); renderParams(true); renderEffects(); renderSide();
   $('#trailTog').parentElement.style.display = ex.trail ? '' : 'none';
   const lp=$('#labProp'); lp.hidden=!ex.lab; if(ex.lab) lp.value=S.prop;
   $('#savebar').classList.remove('show');
@@ -88,6 +88,11 @@ function setCode(code,fromEditor){
 function updateModChip(){ const m=$('#modChip'); m.innerHTML=''; if(S.code!==defaultCode()){ m.innerHTML='<span class="chip mod">已修改</span>'; } }
 
 // ---------- 說明 ----------
+function renderMake(){
+  const ol=$('#make'); ol.innerHTML='';
+  for(const t of (S.ex.make||[])){ const li=document.createElement('li'); li.textContent=t; ol.append(li); }
+  ol.closest('.panel').hidden=!(S.ex.make&&S.ex.make.length);
+}
 function renderDoc(){
   const ex=S.ex, cat=CATS.find(c=>c.id===ex.cat);
   const d=$('#doc'); d.innerHTML='';
@@ -132,18 +137,13 @@ function renderHL(){
 }
 
 // ---------- 參數滑桿 ----------
-const PRE=/^(\s*(?:var\s+|let\s+|const\s+)?([A-Za-z_$][\w$]*)\s*=\s*)(-?\d*\.?\d+)(\s*;?\s*\/\/\s*@\s*(\S+)\s+(-?\d*\.?\d+)\s*~\s*(-?\d*\.?\d+)(?:\s+(\d*\.?\d+))?.*)$/;
+const PRE=/^(\s*(?:var\s+|let\s+|const\s+)?([A-Za-z_$][\w$]*)\s*=\s*)(-?\d*\.?\d+)(\s*;?\s*\/\/\s*@\s*(.+?)\s+(-?\d*\.?\d+)\s*~\s*(-?\d*\.?\d+)(?:\s+(\d*\.?\d+))?\s*)$/; // 標籤可含空格，例如 @門檻 X 0~1920 10
 function parseParams(code){ const out=[]; code.split('\n').forEach((l,i)=>{ const m=l.match(PRE); if(m) out.push({line:i,name:m[2],val:+m[3],label:m[5],min:+m[6],max:+m[7],step:m[8]?+m[8]:((+m[7]-+m[6])/100)}); }); return out; }
 function decimals(step){ const s=String(step); const i=s.indexOf('.'); return i<0?0:s.length-i-1; }
 let dragging=null;
 function renderParams(force){
-  // 有「製作方式」的範例：這個面板改為顯示 AE 製作步驟
-  const mk=S.ex&&S.ex.make;
-  $('#paramsTitle').textContent=mk?'製作方式':'參數調整';
-  $('#paramsDesc').textContent=mk?'':'拖動滑桿會直接改寫表達式中的數字';
-  if(mk){ const box=$('#params'); if(S.paramSig==='make:'+S.ex.id) return; S.paramSig='make:'+S.ex.id; box.innerHTML='';
-    const ol=document.createElement('ol'); ol.className='make'; for(const t of mk){ const li=document.createElement('li'); li.textContent=t; ol.append(li); } box.append(ol); return; }
   const ps=parseParams(S.code); const sig=ps.map(p=>p.name+p.label+p.min+p.max+p.step).join('|');
+  $('#paramsPanel').hidden=!ps.length; // 沒有可調參數時隱藏「參數調整」
   const box=$('#params');
   if(!force && sig===S.paramSig){ ps.forEach((p,i)=>{ const row=box.children[i]; if(!row||row===dragging) return; const r=row.querySelector('input[type=range]'), n=row.querySelector('input[type=number]'); r.value=p.val; if(document.activeElement!==n) n.value=p.val; }); return; }
   S.paramSig=sig; box.innerHTML='';
