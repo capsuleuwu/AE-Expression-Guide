@@ -189,6 +189,8 @@ code,.mono{font-family:var(--mono)}
 .prow input[type=range]{width:100%;accent-color:var(--expr)}
 .prow input[type=number]{width:100%;height:28px;border-radius:6px;border:1px solid var(--line);background:var(--bg);padding:0 6px;font:12.5px var(--mono);text-align:right}
 .hint{color:var(--muted);font-size:12.5px;line-height:1.6}
+.make{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:13.5px;line-height:1.6}
+.make li::marker{color:var(--expr);font-weight:600}
 .hint code{color:#f6c27a;background:var(--bg);padding:1px 5px;border-radius:4px;font-size:12px}
 .fx{border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .fx + .fx{margin-top:10px}
@@ -318,7 +320,7 @@ code,.mono{font-family:var(--mono)}
   <div class="col">
     <section class="panel p-doc" data-fold="doc"><div class="ph"><h3>範例說明</h3><span class="sp"></span></div><div class="pb doc" id="doc"></div></section>
     <section class="panel p-params" data-fold="params">
-      <div class="ph"><h3>參數調整</h3><span class="catdesc">拖動滑桿會直接改寫表達式中的數字</span></div>
+      <div class="ph"><h3 id="paramsTitle">參數調整</h3><span class="catdesc" id="paramsDesc">拖動滑桿會直接改寫表達式中的數字</span></div>
       <div class="pb fold-body"><div class="params" id="params"></div></div>
     </section>
     <section class="panel p-fx" id="fxPanel" data-fold="fx" hidden>

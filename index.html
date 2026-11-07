@@ -189,6 +189,8 @@ code,.mono{font-family:var(--mono)}
 .prow input[type=range]{width:100%;accent-color:var(--expr)}
 .prow input[type=number]{width:100%;height:28px;border-radius:6px;border:1px solid var(--line);background:var(--bg);padding:0 6px;font:12.5px var(--mono);text-align:right}
 .hint{color:var(--muted);font-size:12.5px;line-height:1.6}
+.make{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:13.5px;line-height:1.6}
+.make li::marker{color:var(--expr);font-weight:600}
 .hint code{color:#f6c27a;background:var(--bg);padding:1px 5px;border-radius:4px;font-size:12px}
 .fx{border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .fx + .fx{margin-top:10px}
@@ -318,7 +320,7 @@ code,.mono{font-family:var(--mono)}
   <div class="col">
     <section class="panel p-doc" data-fold="doc"><div class="ph"><h3>範例說明</h3><span class="sp"></span></div><div class="pb doc" id="doc"></div></section>
     <section class="panel p-params" data-fold="params">
-      <div class="ph"><h3>參數調整</h3><span class="catdesc">拖動滑桿會直接改寫表達式中的數字</span></div>
+      <div class="ph"><h3 id="paramsTitle">參數調整</h3><span class="catdesc" id="paramsDesc">拖動滑桿會直接改寫表達式中的數字</span></div>
       <div class="pb fold-body"><div class="params" id="params"></div></div>
     </section>
     <section class="panel p-fx" id="fxPanel" data-fold="fx" hidden>
@@ -1525,6 +1527,13 @@ if (n == 0) {
 }`,
   layer:{ shape:'rect', size:240, color:C.violet, markers:[[1,'A'],[2.5,'B'],[3.2,'C'],[4.6,'D']] } },
 { id:'logic-threshold', cat:'logic', name:'超過門檻變色', sig:'條件 ? 值1 : 值2', prop:'color',
+  make:['新增形狀圖層：用矩形工具在合成中畫一個方塊（圖層 › 新增 › 形狀圖層）。',
+    '做出左右移動：在「位置」設兩個關鍵影格，例如 0 秒 X = 350、2 秒 X = 1570，再對「位置」加上 loopOut("pingpong") 讓它來回移動。',
+    '找到顏色屬性：展開 內容 › 矩形 1 › 填色 1 › 顏色。',
+    '套用表達式：按住 Alt（Mac 為 Option）點擊「顏色」旁的碼錶，貼上這個範例的表達式。',
+    '設定門檻：把 960 改成你要的 X 座標，960 是 1920 寬合成的正中央。',
+    '更換顏色：兩組 [R, G, B, A] 都是 0～1 的數值，例如紅色是 [1, 0, 0, 1]；也可以改用 hexToRgb("#FF5A36") 這種色碼寫法。',
+    '（可選）畫一條參考線：新增一個細長的形狀圖層放在 X = 960，方便看出越線的瞬間。'],
   desc:'三元運算子 a ? b : c 是一行版的 if。當圖層越過畫面中線時改變顏色。',
   how:['套用在 填色 › 顏色'],
   code:R`line = 960; // @門檻 X 0~1920 10
@@ -1781,6 +1790,12 @@ function parseParams(code){ const out=[]; code.split('\n').forEach((l,i)=>{ cons
 function decimals(step){ const s=String(step); const i=s.indexOf('.'); return i<0?0:s.length-i-1; }
 let dragging=null;
 function renderParams(force){
+  // 有「製作方式」的範例：這個面板改為顯示 AE 製作步驟
+  const mk=S.ex&&S.ex.make;
+  $('#paramsTitle').textContent=mk?'製作方式':'參數調整';
+  $('#paramsDesc').textContent=mk?'在 After Effects 中做出這個效果的步驟':'拖動滑桿會直接改寫表達式中的數字';
+  if(mk){ const box=$('#params'); if(S.paramSig==='make:'+S.ex.id) return; S.paramSig='make:'+S.ex.id; box.innerHTML='';
+    const ol=document.createElement('ol'); ol.className='make'; for(const t of mk){ const li=document.createElement('li'); li.textContent=t; ol.append(li); } box.append(ol); return; }
   const ps=parseParams(S.code); const sig=ps.map(p=>p.name+p.label+p.min+p.max+p.step).join('|');
   const box=$('#params');
   if(!force && sig===S.paramSig){ ps.forEach((p,i)=>{ const row=box.children[i]; if(!row||row===dragging) return; const r=row.querySelector('input[type=range]'), n=row.querySelector('input[type=number]'); r.value=p.val; if(document.activeElement!==n) n.value=p.val; }); return; }
