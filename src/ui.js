@@ -99,7 +99,7 @@ function renderDoc(){
   const p=document.createElement('p'); p.textContent=ex.desc;
   const more=document.createElement('div'); more.className='fold-body'; more.append(p);
   d.append(meta,h,sig,more);
-  if(ex.how&&ex.how.length){ const ol=document.createElement('ol'); for(const s of ex.how){ const li=document.createElement('li'); li.textContent=s; ol.append(li); } more.append(ol); }
+  if(ex.how&&ex.how.length){ const ol=document.createElement('ul'); for(const s of ex.how){ const li=document.createElement('li'); li.textContent=s; ol.append(li); } more.append(ol); }
   if(ex.tip){ const t=document.createElement('div'); t.className='tip'; t.textContent=ex.tip; more.append(t); }
   updateModChip();
 }
