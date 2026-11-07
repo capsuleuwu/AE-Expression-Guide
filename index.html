@@ -205,7 +205,7 @@ code,.mono{font-family:var(--mono)}
 .panel.folded > .ph{border-bottom-color:transparent}
 .ph h3.foldable{cursor:pointer;user-select:none}
 .p-doc .ph{min-height:34px}
-.panel.p-doc.folded > .ph{border-bottom-color:var(--line)} /* 收合時下方仍有標題與語法，分隔線保留 */
+.panel.p-doc.folded #doc{display:none} /* 收合時只留「範例說明」標題列 */
 /* ---------- 桌機：頂列固定，三欄各自捲動，預覽永遠可見 ---------- */
 @media (min-width:821px){
   html,body{height:100%;overflow:hidden}
