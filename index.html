@@ -1589,7 +1589,7 @@ x = linear(time % 3, 0, 3, 300, 1620);
   layer:{ shape:'circle', size:110, color:C.green } },
 
 // ---------------- 實驗室 ----------------
-{ id:'lab', make:['在上方選擇要套用的屬性','在 AE 中建立對應的圖層：來源文字用文字圖層，顏色和路徑用形狀圖層','展開該屬性，按住 Alt（Mac：Option）點擊碼錶','把在這裡寫好、預覽正確的表達式複製貼上'], cat:'lab', name:'空白實驗室', sig:'選擇屬性 → 自由撰寫', prop:'position', lab:true,
+{ id:'lab', cat:'lab', name:'空白實驗室', sig:'選擇屬性 → 自由撰寫', prop:'position', lab:true,
   desc:'在這裡切換要套用的屬性，從頭寫任何表達式。所有內建函式都可以使用，結果會即時預覽。',
   how:['上方選擇屬性','在數字變數後面加上 // @標籤 最小~最大 間距 即可產生滑桿'], trail:true,
   code:R`amp = 200; // @幅度 0~500 1
@@ -1748,7 +1748,6 @@ function updateModChip(){ const m=$('#modChip'); m.innerHTML=''; if(S.code!==def
 // ---------- 說明 ----------
 function renderMake(){
   const ol=$('#make'); ol.innerHTML='';
-  $('#makeTitle').textContent=S.ex.lab?'使用方式':'製作方式'; // 自由實驗室顯示「使用方式」
   for(const t of (S.ex.make||[])){ const li=document.createElement('li'); li.textContent=t; ol.append(li); }
   ol.closest('.panel').hidden=!(S.ex.make&&S.ex.make.length);
 }

@@ -90,7 +90,6 @@ function updateModChip(){ const m=$('#modChip'); m.innerHTML=''; if(S.code!==def
 // ---------- 說明 ----------
 function renderMake(){
   const ol=$('#make'); ol.innerHTML='';
-  $('#makeTitle').textContent=S.ex.lab?'使用方式':'製作方式'; // 自由實驗室顯示「使用方式」
   for(const t of (S.ex.make||[])){ const li=document.createElement('li'); li.textContent=t; ol.append(li); }
   ol.closest('.panel').hidden=!(S.ex.make&&S.ex.make.length);
 }
