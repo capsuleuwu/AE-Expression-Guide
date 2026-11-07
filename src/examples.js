@@ -15,7 +15,7 @@ const CATS = [
   { id:'math',    name:'數學與週期運動',   en:'Math.sin · cos · abs', desc:'三角函式與數學運算做出擺動、繞圓、彈跳。' },
   { id:'physics', name:'關鍵影格與物理',   en:'velocity · key() · valueAtTime', desc:'讀取關鍵影格與速度，加上慣性、彈跳與延遲。' },
   { id:'layers',  name:'圖層引用與 index', en:'thisComp.layer() · index', desc:'讓圖層彼此連動，或用 index 讓複製圖層自動錯開。' },
-  { id:'controls',name:'表達式控制效果',   en:'effect()("…")', desc:'用滑桿、核取方塊、顏色等效果當作控制面板。' },
+  { id:'controls',name:'控制效果',   en:'effect()("…")', desc:'用滑桿、核取方塊、顏色等效果當作控制面板。' },
   { id:'text',    name:'文字',             en:'sourceText', desc:'計數器、打字機、倒數計時、亂碼解碼。' },
   { id:'color',   name:'顏色',             en:'hslToRgb · hexToRgb', desc:'顏色是 [R, G, B, A] 四個 0~1 的數值。' },
   { id:'path',    name:'形狀路徑',         en:'createPath()', desc:'用程式產生多邊形、波形與星形路徑。' },
