@@ -2958,14 +2958,12 @@ const Sync=(function(){
   return { init, dirty };
 })();
 
-// 手機版「在 After Effects 中套用」：展開時平滑捲到整段說明
+// 手機版「在 After Effects 中套用」：展開時平滑捲到整段說明（用瀏覽器原生平滑捲動，iOS 上較不會抖動）
 function howScroll(panel){
-  const D=420, ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2, rect=panel.getBoundingClientRect();
-  const from=window.scrollY, maxY=document.documentElement.scrollHeight-innerHeight;
-  const to=Math.max(from,Math.min(maxY, from+rect.bottom-innerHeight+12, from+rect.top-12)); // 讓整個說明進入畫面（太高時以標題為準）
-  if(to-from<1) return; const t0=performance.now();
-  const step=now=>{ const k=Math.min(1,(now-t0)/D); window.scrollTo(0,from+(to-from)*ease(k)); if(k<1) requestAnimationFrame(step); };
-  requestAnimationFrame(step);
+  const rect=panel.getBoundingClientRect(), vh=(window.visualViewport&&visualViewport.height)||innerHeight;
+  const from=window.scrollY, maxY=document.documentElement.scrollHeight-vh;
+  const to=Math.max(from,Math.min(maxY, from+rect.bottom-vh+12, from+rect.top-12)); // 讓整個說明進入畫面（太高時以標題為準）
+  if(to-from<1) return; window.scrollTo({top:to,behavior:'smooth'});
 }
 
 // ---------- 面板收合 ----------
@@ -2980,8 +2978,9 @@ function howScroll(panel){
     set(key in st ? st[key] : panel.dataset.foldDefault==='closed');
     const after=()=>setTimeout(()=>{ S.graphDirty=true; S.dirty=true; resizeAll(); },0);
     const toggle=()=>{ const f=!panel.classList.contains('folded');
-      set(f); st[key]=f; store.set('folds',st); after();
-      if(key==='how' && !f && matchMedia('(max-width:820px)').matches) howScroll(panel); };
+      set(f); st[key]=f; store.set('folds',st);
+      if(key==='how'){ if(!f && matchMedia('(max-width:820px)').matches) requestAnimationFrame(()=>howScroll(panel)); return; } // 這個面板沒有畫布，不需重算尺寸，避免捲動中重排而抖動
+      after(); };
     b.onclick=toggle; if(h) h.onclick=toggle;
     ph.append(b);
   });
