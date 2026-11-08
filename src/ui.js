@@ -583,13 +583,15 @@ const Sync=(function(){
   return { init, dirty };
 })();
 
-// 手機版「在 After Effects 中套用」：展開時平滑捲到整段說明（用瀏覽器原生平滑捲動，iOS 上較不會抖動）
+// 「在 After Effects 中套用」：展開時平滑捲到整段說明（電腦版捲右欄、手機版捲整頁；用瀏覽器原生平滑捲動較不會抖動）
 function howScroll(panel){
-  const rect=panel.getBoundingClientRect(), vh=(window.visualViewport&&visualViewport.height)||innerHeight;
-  const from=window.scrollY, maxY=document.documentElement.scrollHeight-vh;
-  // 停在頁面最底端前幾 px：iOS 捲到最底會觸發回彈並重新顯示底部工具列，造成最後抖一下
-  const to=Math.max(from,Math.min(maxY-6, from+rect.bottom-vh+6, from+rect.top-12)); // 讓整個說明進入畫面（太高時以標題為準）
-  if(to-from<1) return; window.scrollTo({top:to,behavior:'smooth'});
+  const col=panel.closest('.col'), inCol=col && getComputedStyle(col).overflowY==='auto' && col.scrollHeight>col.clientHeight;
+  const sc=inCol?col:document.documentElement;
+  const top=inCol?col.getBoundingClientRect().top:0, vh=inCol?col.clientHeight:((window.visualViewport&&visualViewport.height)||innerHeight);
+  const from=inCol?col.scrollTop:window.scrollY, maxY=sc.scrollHeight-vh, rect=panel.getBoundingClientRect();
+  // 停在最底端前幾 px：iOS 捲到最底會觸發回彈並重新顯示底部工具列，造成最後抖一下
+  const to=Math.max(from,Math.min(maxY-6, from+rect.bottom-top-vh+6, from+rect.top-top-12)); // 讓整個說明進入畫面（太高時以標題為準）
+  if(to-from<1) return; (inCol?col:window).scrollTo({top:to,behavior:'smooth'});
 }
 
 // ---------- 面板收合 ----------
@@ -601,11 +603,11 @@ function howScroll(panel){
     b.innerHTML='<svg viewBox="0 0 12 12" fill="none" stroke-width="1.6"><path d="M3 4.5l3 3 3-3"/></svg>';
     const h=ph.querySelector('h3'); if(h) h.classList.add('foldable');
     const set=(f)=>{ panel.classList.toggle('folded',f); b.setAttribute('aria-expanded',String(!f)); b.setAttribute('aria-label',(f?'展開 ':'收合 ')+(h?h.textContent:'')); };
-    set(key in st ? st[key] : panel.dataset.foldDefault==='closed');
+    set(key==='how' ? true : key in st ? st[key] : panel.dataset.foldDefault==='closed'); // 「在 After Effects 中套用」每次開啟網頁都預設收起
     const after=()=>setTimeout(()=>{ S.graphDirty=true; S.dirty=true; resizeAll(); },0);
     const toggle=()=>{ const f=!panel.classList.contains('folded');
       set(f); st[key]=f; store.set('folds',st);
-      if(key==='how'){ if(!f && matchMedia('(max-width:820px)').matches) requestAnimationFrame(()=>howScroll(panel)); return; } // 這個面板沒有畫布，不需重算尺寸，避免捲動中重排而抖動
+      if(key==='how'){ if(!f) requestAnimationFrame(()=>howScroll(panel)); return; } // 這個面板沒有畫布，不需重算尺寸，避免捲動中重排而抖動
       after(); };
     b.onclick=toggle; if(h) h.onclick=toggle;
     ph.append(b);
