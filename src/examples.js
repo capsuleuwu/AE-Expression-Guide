@@ -1133,7 +1133,7 @@ value + [d, 0]`,
 pull = 0.9; // @吸引速度 0.1~4 0.1
 spin = 0.7; // @每秒圈數 -3~3 0.1
 target = thisComp.layer("磁鐵").transform.position;
-t = (time - inPoint) % 2;
+t = (time - inPoint) % 1.5;
 r = r0 * Math.exp(-pull * t);
 a = t * spin * 2 * Math.PI;
 target + [Math.cos(a), Math.sin(a)] * r`,
