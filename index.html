@@ -2386,15 +2386,18 @@ const S={ ex:null, saved:null, code:'', prop:'', scene:null, t:0, playing:!match
 
 // ---------- 側欄 ----------
 // 側欄平滑捲動（自訂緩動，使用者滑動時立即停止）
+// v 為「虛擬捲動位置」：v < 0 時捲軸已到頂，改用列表上方暫時的留白補足，避免上方分類收起時標題瞬間跳動
 const sideScroll={ raf:0,
-  stop(){ cancelAnimationFrame(this.raf); this.raf=0; },
-  to(box,target){ this.stop(); const from=box.scrollTop, max=box.scrollHeight-box.clientHeight;
-    target=Math.max(0,Math.min(max,target)); const d=target-from; if(Math.abs(d)<1) return;
+  apply(box,v){ const list=$('#catList'); if(v<0){ list.style.marginTop=(-v)+'px'; box.scrollTop=0; } else { list.style.marginTop=''; box.scrollTop=v; } },
+  stop(){ cancelAnimationFrame(this.raf); this.raf=0; $('#catList').style.marginTop=''; },
+  to(box,from,target){ cancelAnimationFrame(this.raf); this.raf=0;
+    const max=box.scrollHeight-box.clientHeight; target=Math.max(0,Math.min(max,target));
+    this.apply(box,from); const d=target-from; if(Math.abs(d)<1){ this.apply(box,target); return; }
     const dur=Math.min(650,Math.max(320,Math.abs(d)*0.6)), t0=performance.now();
     const ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
-    const stopOnUser=()=>this.stop();
+    const stopOnUser=()=>{ if(!$('#catList').style.marginTop){ cancelAnimationFrame(this.raf); this.raf=0; } };
     box.addEventListener('wheel',stopOnUser,{once:true,passive:true}); box.addEventListener('touchstart',stopOnUser,{once:true,passive:true});
-    const step=now=>{ const k=Math.min(1,(now-t0)/dur); box.scrollTop=from+d*ease(k); this.raf=k<1?requestAnimationFrame(step):0; };
+    const step=now=>{ const k=Math.min(1,(now-t0)/dur); this.apply(box,from+d*ease(k)); this.raf=k<1?requestAnimationFrame(step):0; };
     this.raf=requestAnimationFrame(step); } };
 function renderSide(){
   const q=$('#search').value.trim().toLowerCase();
@@ -2426,15 +2429,16 @@ function renderSide(){
         S.closed={}; groups.forEach(x=>S.closed[x.cat.id]=true); }
       wrap.classList.toggle('closed',!opening); S.closed[g.cat.id]=!opening; h.setAttribute('aria-expanded',String(opening));
       sideScroll.stop();
-      box.scrollTop+=h.getBoundingClientRect().top-y0; // 上方分類收起後，讓點擊的標題留在原位，不會突然跳動
-      if(opening){ // 再平滑捲到這個分類（停在搜尋列下方）
+      if(opening){ // 先讓點擊的標題留在原位，再平滑捲到這個分類（停在搜尋列下方）
         const bar=box.querySelector('.side-search'), barH=bar?bar.offsetHeight:0;
         side.style.paddingBottom='';
         const below=side.getBoundingClientRect().bottom-wrap.getBoundingClientRect().top;
         const need=box.clientHeight-barH-below-parseFloat(getComputedStyle(box).paddingBottom||0);
         if(need>0) side.style.paddingBottom=need+'px'; // 底部留白，讓靠下方的分類也能捲到最上面
-        box.scrollTop+=h.getBoundingClientRect().top-y0;
-        sideScroll.to(box, box.scrollTop+wrap.getBoundingClientRect().top-box.getBoundingClientRect().top-barH); } };
+        const from=box.scrollTop+h.getBoundingClientRect().top-y0; // 可能為負（上方分類收起、捲軸已到頂）
+        const target=box.scrollTop+wrap.getBoundingClientRect().top-box.getBoundingClientRect().top-barH;
+        sideScroll.to(box,from,target);
+      } else box.scrollTop+=h.getBoundingClientRect().top-y0; };
     const en=document.createElement('span'); en.className='cat-en'; en.textContent=g.cat.en; en.onclick=()=>h.click(); // 點英文小註記也能展開／收起
     const list=document.createElement('div'); list.className='items';
     for(const it of g.items){
