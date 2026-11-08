@@ -583,27 +583,13 @@ const Sync=(function(){
   return { init, dirty };
 })();
 
-// 手機版「在 After Effects 中套用」：展開／收合加上高度過渡，展開時平滑捲到整段說明
-function howAnim(panel,folding,commit){
-  const body=panel.querySelector('.fold-body'), D=420, ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
-  panel._anim=true;
-  const done=()=>{ body.style.cssText=''; panel._anim=false; };
-  body.style.overflow='hidden'; body.style.transition=`height ${D}ms cubic-bezier(.65,0,.35,1), opacity ${D}ms ease, padding ${D}ms cubic-bezier(.65,0,.35,1)`;
-  if(folding){
-    body.style.height=body.offsetHeight+'px'; body.offsetHeight;
-    body.style.height='0px'; body.style.opacity='0'; body.style.paddingTop='0px'; body.style.paddingBottom='0px';
-    setTimeout(()=>{ commit(); done(); },D); return;
-  }
-  commit(); // 先展開以量出最終高度
-  const H=body.offsetHeight, rect=panel.getBoundingClientRect();
+// 手機版「在 After Effects 中套用」：展開時平滑捲到整段說明
+function howScroll(panel){
+  const D=420, ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2, rect=panel.getBoundingClientRect();
   const from=window.scrollY, maxY=document.documentElement.scrollHeight-innerHeight;
   const to=Math.max(from,Math.min(maxY, from+rect.bottom-innerHeight+12, from+rect.top-12)); // 讓整個說明進入畫面（太高時以標題為準）
-  const pt=getComputedStyle(body).paddingTop, pb=getComputedStyle(body).paddingBottom;
-  body.style.transition='none'; body.style.height='0px'; body.style.opacity='0'; body.style.paddingTop='0px'; body.style.paddingBottom='0px'; body.offsetHeight;
-  body.style.transition=`height ${D}ms cubic-bezier(.65,0,.35,1), opacity ${D}ms ease, padding ${D}ms cubic-bezier(.65,0,.35,1)`;
-  body.style.height=H+'px'; body.style.opacity='1'; body.style.paddingTop=pt; body.style.paddingBottom=pb;
-  const t0=performance.now();
-  const step=now=>{ const k=Math.min(1,(now-t0)/D); window.scrollTo(0,from+(to-from)*ease(k)); if(k<1) requestAnimationFrame(step); else done(); };
+  if(to-from<1) return; const t0=performance.now();
+  const step=now=>{ const k=Math.min(1,(now-t0)/D); window.scrollTo(0,from+(to-from)*ease(k)); if(k<1) requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
 
@@ -619,8 +605,8 @@ function howAnim(panel,folding,commit){
     set(key in st ? st[key] : panel.dataset.foldDefault==='closed');
     const after=()=>setTimeout(()=>{ S.graphDirty=true; S.dirty=true; resizeAll(); },0);
     const toggle=()=>{ const f=!panel.classList.contains('folded');
-      if(key==='how' && matchMedia('(max-width:820px)').matches && !panel._anim){ howAnim(panel,f,()=>{ set(f); st[key]=f; store.set('folds',st); }); after(); return; }
-      set(f); st[key]=f; store.set('folds',st); after(); };
+      set(f); st[key]=f; store.set('folds',st); after();
+      if(key==='how' && !f && matchMedia('(max-width:820px)').matches) howScroll(panel); };
     b.onclick=toggle; if(h) h.onclick=toggle;
     ph.append(b);
   });
