@@ -2962,7 +2962,8 @@ const Sync=(function(){
 function howScroll(panel){
   const rect=panel.getBoundingClientRect(), vh=(window.visualViewport&&visualViewport.height)||innerHeight;
   const from=window.scrollY, maxY=document.documentElement.scrollHeight-vh;
-  const to=Math.max(from,Math.min(maxY, from+rect.bottom-vh+12, from+rect.top-12)); // 讓整個說明進入畫面（太高時以標題為準）
+  // 停在頁面最底端前幾 px：iOS 捲到最底會觸發回彈並重新顯示底部工具列，造成最後抖一下
+  const to=Math.max(from,Math.min(maxY-6, from+rect.bottom-vh+6, from+rect.top-12)); // 讓整個說明進入畫面（太高時以標題為準）
   if(to-from<1) return; window.scrollTo({top:to,behavior:'smooth'});
 }
 
