@@ -20,6 +20,14 @@ function renderSide(){
   for(const c of CATS){ const items=EX.filter(e=>e.cat===c.id && match(e)).map(e=>({ex:e})); if(items.length) groups.push({cat:c,items}); }
   for(const g of groups){
     total+=g.items.length;
+    if(g.cat.id==='lab' && g.items.length===1 && g.items[0].ex){
+      // 自由實驗室只有一個項目：不做下拉選單，直接顯示「空白實驗室」選項
+      const ex=g.items[0].ex, wrap=document.createElement('div'); wrap.className='cat cat-solo';
+      const h=document.createElement('button'); h.type='button'; h.className='cat-h'+((!S.saved&&S.ex&&S.ex.id===ex.id)?' on':'');
+      h.innerHTML='<span class="dot"></span><span class="nm"></span>'; h.querySelector('.nm').textContent=ex.name;
+      h.onclick=()=>{ go(ex.id); setDrawer(false); };
+      wrap.append(h); side.append(wrap); continue;
+    }
     const isClosed = g.cat.id in S.closed ? S.closed[g.cat.id] : true; // 預設收起
     const wrap=document.createElement('div'); wrap.className='cat'+(isClosed&&!q?' closed':'');
     const h=document.createElement('button'); h.className='cat-h'; h.type='button'; h.setAttribute('aria-expanded',String(!wrap.classList.contains('closed')));

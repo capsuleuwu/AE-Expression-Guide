@@ -64,6 +64,11 @@ code,.mono{font-family:var(--mono)}
 .cat-h .chev{width:12px;height:12px;stroke:var(--muted);transition:transform .15s}
 .cat.closed .chev{transform:rotate(-90deg)}
 .cat.closed .items{display:none}
+.cat-solo .cat-h{border-radius:6px;margin:4px 0}
+.cat-solo .cat-h .dot{width:12px;height:12px;display:grid;place-items:center}
+.cat-solo .cat-h.on{background:#21364f}
+.cat-solo .cat-h.on .dot::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--expr);transform:rotate(45deg)}
+.cat-solo .cat-h:hover{background:var(--panel-2)}
 .cat-en{display:block;font:11px var(--mono);color:var(--muted);padding:0 12px 6px 32px;margin-top:-6px;cursor:pointer;user-select:none}
 .cat-h:hover .nm,.cat-h:hover + .cat-en,.cat-en:hover{color:var(--ink)}
 .items{padding:0 6px 8px}

@@ -64,6 +64,11 @@ code,.mono{font-family:var(--mono)}
 .cat-h .chev{width:12px;height:12px;stroke:var(--muted);transition:transform .15s}
 .cat.closed .chev{transform:rotate(-90deg)}
 .cat.closed .items{display:none}
+.cat-solo .cat-h{border-radius:6px;margin:4px 0}
+.cat-solo .cat-h .dot{width:12px;height:12px;display:grid;place-items:center}
+.cat-solo .cat-h.on{background:#21364f}
+.cat-solo .cat-h.on .dot::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--expr);transform:rotate(45deg)}
+.cat-solo .cat-h:hover{background:var(--panel-2)}
 .cat-en{display:block;font:11px var(--mono);color:var(--muted);padding:0 12px 6px 32px;margin-top:-6px;cursor:pointer;user-select:none}
 .cat-h:hover .nm,.cat-h:hover + .cat-en,.cat-en:hover{color:var(--ink)}
 .items{padding:0 6px 8px}
@@ -1678,6 +1683,14 @@ function renderSide(){
   for(const c of CATS){ const items=EX.filter(e=>e.cat===c.id && match(e)).map(e=>({ex:e})); if(items.length) groups.push({cat:c,items}); }
   for(const g of groups){
     total+=g.items.length;
+    if(g.cat.id==='lab' && g.items.length===1 && g.items[0].ex){
+      // 自由實驗室只有一個項目：不做下拉選單，直接顯示「空白實驗室」選項
+      const ex=g.items[0].ex, wrap=document.createElement('div'); wrap.className='cat cat-solo';
+      const h=document.createElement('button'); h.type='button'; h.className='cat-h'+((!S.saved&&S.ex&&S.ex.id===ex.id)?' on':'');
+      h.innerHTML='<span class="dot"></span><span class="nm"></span>'; h.querySelector('.nm').textContent=ex.name;
+      h.onclick=()=>{ go(ex.id); setDrawer(false); };
+      wrap.append(h); side.append(wrap); continue;
+    }
     const isClosed = g.cat.id in S.closed ? S.closed[g.cat.id] : true; // 預設收起
     const wrap=document.createElement('div'); wrap.className='cat'+(isClosed&&!q?' closed':'');
     const h=document.createElement('button'); h.className='cat-h'; h.type='button'; h.setAttribute('aria-expanded',String(!wrap.classList.contains('closed')));
