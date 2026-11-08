@@ -2026,7 +2026,7 @@ const SER=['#ee6a5c','#62c48a','#4ea4f2','#c9ccd2','#f2a640','#b48af0'];
 function computeGraph(){
   const L=userLayers()[0]; S.graph=null; if(!L) return;
   const d=AE.PROP_INFO[S.prop].dims;
-  document.querySelector('.p-graph').hidden=(d==='text'); // 文字屬性沒有數值圖表，整個面板不顯示
+  document.querySelector('.p-graph').hidden=(d==='text'||d==='path'); // 文字、路徑屬性沒有數值圖表，整個面板不顯示
   const N=Math.min(360,Math.max(120,Math.floor(gr.width/DPR/2)));
   if(d==='text'||d==='path'){ S.graph={msg: d==='text'?'文字屬性的結果是字串，請看合成預覽與上方讀值。':'路徑屬性的結果是形狀，請看合成預覽。'}; return; }
   const ts=[]; for(let i=0;i<=N;i++) ts.push(i/N*COMP.dur*0.9999);
