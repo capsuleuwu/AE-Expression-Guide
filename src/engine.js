@@ -83,6 +83,9 @@ class Layer {
     const dflt = { position:[COMP.w/2,COMP.h/2], scale:[100,100], rotation:0, opacity:100, anchorPoint:[0,0],
       color:(spec.color||[0.24,0.61,0.94]).concat([1]).slice(0,4), sourceText:spec.text||'', path:defaultPath(), amount:[100,100] };
     this.animScale=spec.animScale==null?0:spec.animScale;
+    // 文字動畫製作工具的屬性（未指定時沿用舊的「縮放 0%」設定）
+    this.anim=spec.anim||{scale:this.animScale};
+    this.blend=spec.blend||null;
     this.props={};
     for(const name in PROP_INFO){ this.props[name]=new Prop(this,name, b[name]!==undefined?b[name]:dflt[name], k[name], e[name]); }
     this.markers=(spec.markers||[]).map((m,i)=>({time:m[0], comment:m[1]||'', index:i+1, duration:0}));

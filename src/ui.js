@@ -251,16 +251,23 @@ function drawLayer(ctx,L,t){
   if(t<L.inPoint||t>=L.outPoint) return;
   const pos=ev(L,'position',t), sc=ev(L,'scale',t), rot=ev(L,'rotation',t), op=ev(L,'opacity',t), an=ev(L,'anchorPoint',t), col=ev(L,'color',t);
   const w=Array.isArray(L.size)?L.size[0]:L.size, h=Array.isArray(L.size)?L.size[1]:L.size;
-  ctx.save(); ctx.globalAlpha=Math.min(1,Math.max(0,op/100));
+  ctx.save(); ctx.globalAlpha=Math.min(1,Math.max(0,op/100)); if(L.blend==='add') ctx.globalCompositeOperation='lighter'; // 相加混合模式
   ctx.translate(pos[0],pos[1]); ctx.rotate(rot*Math.PI/180); ctx.scale(sc[0]/100,sc[1]/100); ctx.translate(-an[0],-an[1]);
   if(L.shape==='animtext'){
-    const chars=Array.from(L.spec.text||''); const n=chars.length;
+    // 逐字動畫：每個字依「表達式選取器 › 數量」套用動畫製作工具的位置／縮放／旋轉／不透明度／字距
+    const chars=Array.from(L.spec.text||''); const n=chars.length; const an=L.anim;
     ctx.font='700 '+L.fontSize+'px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.fillStyle=rgba(col);
-    const ws=chars.map(c=>ctx.measureText(c).width); const tot=ws.reduce((a,b)=>a+b,0); let x=-tot/2; const base=L.fontSize*0.36;
-    chars.forEach((c,i)=>{ const a=AE.evalProp(L.props.amount,t,{textIndex:i+1,textTotal:n}); const k=L.animScale;
-      const fx=(100+(k-100)*a[0]/100)/100, fy=(100+(k-100)*a[1]/100)/100; const cxp=x+ws[i]/2;
-      if(c!==' '){ ctx.save(); ctx.translate(cxp,base); ctx.scale(fx,fy); ctx.fillText(c,0,0); ctx.restore(); }
-      x+=ws[i]; });
+    const ws=chars.map(c=>ctx.measureText(c).width), base=L.fontSize*0.36;
+    const amts=chars.map((c,i)=>AE.evalProp(L.props.amount,t,{textIndex:i+1,textTotal:n}));
+    const trk=an.tracking||0, sc=an.scale==null?null:(Array.isArray(an.scale)?an.scale:[an.scale,an.scale]);
+    let tot=0; ws.forEach((w,i)=>{ tot+=w+(i<n-1?trk*amts[i][0]/100:0); }); let x=-tot/2;
+    chars.forEach((c,i)=>{ const f0=amts[i][0]/100, f1=amts[i][1]/100, cxp=x+ws[i]/2;
+      if(c!==' '){
+        const dx=an.position?an.position[0]*f0:0, dy=an.position?an.position[1]*f1:0;
+        const sx=sc?(100+(sc[0]-100)*f0)/100:1, sy=sc?(100+(sc[1]-100)*f1)/100:1;
+        const o=an.opacity==null?1:Math.min(1,Math.max(0,(100+(an.opacity-100)*f0)/100));
+        ctx.save(); ctx.globalAlpha*=o; ctx.translate(cxp+dx,base+dy); if(an.rotation) ctx.rotate(an.rotation*f0*Math.PI/180); ctx.scale(sx,sy); ctx.fillText(c,0,0); ctx.restore(); }
+      x+=ws[i]+trk*f0; });
   } else if(L.shape==='text'){
     const s=String(ev(L,'sourceText',t)); const lines=s.split(/\r\n|\r|\n/);
     ctx.font='700 '+L.fontSize+'px "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=rgba(col);
