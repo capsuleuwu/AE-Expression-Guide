@@ -528,18 +528,25 @@ for (i = 0; i < sides; i++) {
 }
 createPath(pts, [], [], true)`,
   layer:{ shape:'path', color:C.blue } },
-{ id:'path-wave', make:['用鋼筆工具在合成中畫一個形狀（或畫矩形後按右鍵 › 轉換為貝茲路徑）','在形狀圖層關掉「填色」，加上「筆畫」並設定粗細','展開 內容 › 形狀 1 › 路徑 1 › 路徑','按住 Alt（Mac：Option）點擊「路徑」的碼錶，貼上表達式','調整 amp（振幅）、waves（波數）、speed（流動速度）'], cat:'path', name:'流動正弦波', sig:'createPath(points, [], [], false)', prop:'path',
-  desc:'沿 X 方向取很多點，Y 用 sin 加上時間，就是一條會流動的波浪線。最後一個參數 false 代表不封閉。',
+{ id:'path-wave', make:['用鋼筆工具在合成中畫一個形狀（或畫矩形後按右鍵 › 轉換為貝茲路徑）','在形狀圖層關掉「填色」，加上「筆畫」並設定粗細','展開 內容 › 形狀 1 › 路徑 1 › 路徑','按住 Alt（Mac：Option）點擊「路徑」的碼錶，貼上表達式','調整 amp（振幅）、waves（波數）、speed（流動速度）'], cat:'path', name:'流動正弦波', sig:'createPath(points, inT, outT, false)', prop:'path',
+  desc:'沿 X 方向取很多點，Y 用 sin 加上時間，就是一條會流動的波浪線。每個點再依 sin 的斜率加上切線把手，線條就會平滑。最後一個參數 false 代表不封閉。',
   how:['在形狀圖層加上「筆畫」'],
   code:R`amp = 160; // @振幅 0~400 1
 waves = 2; // @波數 0.5~6 0.5
 speed = 4; // @流動速度 -10~10 0.5
-pts = [];
-for (i = 0; i <= 60; i++) {
-  x = i / 60 * 1500 - 750;
-  pts.push([x, Math.sin(i / 60 * Math.PI * 2 * waves + time * speed) * amp]);
+pts = []; inT = []; outT = [];
+n = 60; w = 1500;
+k = Math.PI * 2 * waves / w; // 每 1px 的相位變化
+h = w / n / 3; // 切線把手長度（點距的 1/3）
+for (i = 0; i <= n; i++) {
+  x = i / n * w - w / 2;
+  ph = (x + w / 2) * k + time * speed;
+  slope = Math.cos(ph) * amp * k; // sin 的斜率，讓曲線平滑
+  pts.push([x, Math.sin(ph) * amp]);
+  inT.push([-h, -slope * h]);
+  outT.push([h, slope * h]);
 }
-createPath(pts, [], [], false)`,
+createPath(pts, inT, outT, false)`,
   layer:{ shape:'path', color:C.green, stroke:10 } },
 { id:'path-star', make:['用鋼筆工具在合成中畫一個形狀（或畫矩形後按右鍵 › 轉換為貝茲路徑）','展開 內容 › 形狀 1 › 路徑 1 › 路徑','按住 Alt（Mac：Option）點擊「路徑」的碼錶，貼上表達式','調整 points（星角數）與 outer（外半徑）'], cat:'path', name:'脈動星形', sig:'內外半徑交替', prop:'path',
   desc:'奇數點用外半徑、偶數點用內半徑就是星形，讓內半徑隨時間變化就會一縮一放。',
