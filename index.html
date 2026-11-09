@@ -2746,6 +2746,7 @@ function tlRows(){
 }
 function tlHeight(){ return 34+tlRows().length*24+4; }
 function drawTL(){
+  if(tl.clientWidth && Math.abs(tl.width-Math.round(tl.clientWidth*DPR))>1) fitCanvas(tl,tlHeight()); // 同上：避免時間軸被拉伸
   const W=tl.width/DPR, H=tl.height/DPR; tx.setTransform(DPR,0,0,DPR,0,0);
   tx.fillStyle='#1d1f23'; tx.fillRect(0,0,W,H);
   const left=W<520?78:118, right=14, tw=W-left-right, X=t=>left+t/COMP.dur*tw;
@@ -2817,6 +2818,8 @@ function drawGraph(){
   let msg=box.querySelector('.graph-msg');
   if(!g||g.msg){ gr.style.display='none'; if(!msg){ msg=document.createElement('div'); msg.className='graph-msg'; box.append(msg); } msg.textContent=g?g.msg:''; leg.innerHTML=''; return; }
   gr.style.display=''; if(msg) msg.remove();
+  // 畫布先前被隱藏時量不到寬度，會以錯誤尺寸建立而被拉伸；顯示後若尺寸不符就重新配置
+  if(gr.clientWidth && Math.abs(gr.width-Math.round(gr.clientWidth*DPR))>1){ fitCanvas(gr,170); S.graphDirty=true; return drawGraph(); }
   const l=52, r=12, t=10, b=22, w=W-l-r, h=H-t-b; const X=tt=>l+tt/COMP.dur*w;
   gx.font='10.5px "JetBrains Mono",monospace'; gx.textBaseline='middle';
   for(let s=0;s<=COMP.dur;s++){ const x=X(s); gx.strokeStyle='#26292e'; gx.beginPath(); gx.moveTo(x,t); gx.lineTo(x,t+h); gx.stroke(); gx.fillStyle='#8d939c'; gx.textAlign='center'; gx.fillText(s+'s',x,H-9); }
