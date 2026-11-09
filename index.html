@@ -2819,7 +2819,7 @@ function drawGraph(){
   if(!g||g.msg){ gr.style.display='none'; if(!msg){ msg=document.createElement('div'); msg.className='graph-msg'; box.append(msg); } msg.textContent=g?g.msg:''; leg.innerHTML=''; return; }
   gr.style.display=''; if(msg) msg.remove();
   // 畫布先前被隱藏時量不到寬度，會以錯誤尺寸建立而被拉伸；顯示後若尺寸不符就重新配置
-  if(gr.clientWidth && Math.abs(gr.width-Math.round(gr.clientWidth*DPR))>1){ fitCanvas(gr,170); S.graphDirty=true; return drawGraph(); }
+  if(gr.clientWidth && Math.abs(gr.width-Math.round(gr.clientWidth*DPR))>1){ fitCanvas(gr,170); computeGraph(); return drawGraph(); }
   const l=52, r=12, t=10, b=22, w=W-l-r, h=H-t-b; const X=tt=>l+tt/COMP.dur*w;
   gx.font='10.5px "JetBrains Mono",monospace'; gx.textBaseline='middle';
   for(let s=0;s<=COMP.dur;s++){ const x=X(s); gx.strokeStyle='#26292e'; gx.beginPath(); gx.moveTo(x,t); gx.lineTo(x,t+h); gx.stroke(); gx.fillStyle='#8d939c'; gx.textAlign='center'; gx.fillText(s+'s',x,H-9); }
@@ -2848,7 +2848,8 @@ let lastTs=null, lastTc='';
 function frame(ts){
   if(lastTs==null) lastTs=ts; const dt=Math.min(0.1,(ts-lastTs)/1000); lastTs=ts;
   if(S.playing){ S.t+=dt*S.speed; if(S.t>=COMP.dur) S.t%=COMP.dur; S.dirty=true; }
-  if(S.graphDirty){ S.graphDirty=false; const h=tlHeight(); if(Math.abs(tl.height/DPR-h)>1) fitCanvas(tl,h); computeGraph(); }
+  if(S.graphDirty){ S.graphDirty=false; const h=tlHeight(); if(Math.abs(tl.height/DPR-h)>1) fitCanvas(tl,h); computeGraph();
+    if(gr.clientWidth && Math.abs(gr.width-Math.round(gr.clientWidth*DPR))>1){ fitCanvas(gr,170); computeGraph(); } } // 圖表剛從隱藏變成顯示：先配置正確尺寸再取樣，避免同一條線先後畫兩次而抖動
   if(S.dirty){ S.dirty=false;
     const tf=Math.floor(S.t*COMP.fps+1e-6); const tcs=tf+'';
     if(tcs!==lastTc){ lastTc=tcs; const f=tf%COMP.fps, s=Math.floor(tf/COMP.fps); $('#tc').innerHTML='0:00:'+String(s).padStart(2,'0')+':'+String(f).padStart(2,'0')+'<small>'+S.t.toFixed(2)+' 秒 · 第 '+tf+' 格</small>'; }
