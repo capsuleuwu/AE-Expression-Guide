@@ -587,7 +587,7 @@ const Sync=(function(){
   return { init, dirty };
 })();
 
-// 「在 After Effects 中套用」：展開時平滑捲到整段說明（電腦版捲右欄、手機版捲整頁；用瀏覽器原生平滑捲動較不會抖動）
+// 「在 After Effects 中套用」與電腦版「數值圖表」：展開時平滑捲到整個面板（電腦版捲右欄、手機版捲整頁；用瀏覽器原生平滑捲動較不會抖動）
 function howScroll(panel){
   const col=panel.closest('.col'), inCol=col && getComputedStyle(col).overflowY==='auto' && col.scrollHeight>col.clientHeight;
   const sc=inCol?col:document.documentElement;
@@ -611,7 +611,8 @@ function howScroll(panel){
     const after=()=>setTimeout(()=>{ S.graphDirty=true; S.dirty=true; resizeAll(); },0);
     const toggle=()=>{ const f=!panel.classList.contains('folded');
       set(f); st[key]=f; store.set('folds',st);
-      if(key==='how'){ if(!f) requestAnimationFrame(()=>howScroll(panel)); return; } // 這個面板沒有畫布，不需重算尺寸，避免捲動中重排而抖動
+      if(key==='how'){ if(!f) requestAnimationFrame(()=>howScroll(panel)); return; }
+      if(key==='graph' && !f && matchMedia('(min-width:821px)').matches){ resizeAll(); requestAnimationFrame(()=>howScroll(panel)); return; } // 電腦版：展開數值圖表時同樣平滑捲到整個面板 // 這個面板沒有畫布，不需重算尺寸，避免捲動中重排而抖動
       after(); };
     b.onclick=toggle; if(h) h.onclick=toggle;
     ph.append(b);
