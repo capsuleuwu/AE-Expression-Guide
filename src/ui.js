@@ -557,10 +557,10 @@ function showSaveInput(n){
     if(Math.abs(top-window.scrollY)>4) window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
   };
   if(!mobile || !window.visualViewport){ requestAnimationFrame(place); return; }
-  // 手機：等鍵盤彈出、可見高度穩定後只捲動一次；沒有鍵盤變化時 0.45 秒後捲動
+  // 手機：等鍵盤彈出、可見高度穩定後只捲動一次；沒有鍵盤變化時 0.3 秒後捲動
   let done=false, t=0; const once=()=>{ if(done) return; done=true; visualViewport.removeEventListener('resize',on); place(); };
   const on=()=>{ clearTimeout(t); t=setTimeout(once,120); };
-  visualViewport.addEventListener('resize',on); setTimeout(once,450);
+  visualViewport.addEventListener('resize',on); setTimeout(once,300);
 }
 $('#bSave').onclick=()=>{ const bar=$('#savebar'), n=$('#saveName');
   const cp=$('.p-code'); if(cp && cp.classList.contains('folded')){ noAutoScroll=true; cp.querySelector('.fold').click(); noAutoScroll=false; } // 表達式面板收起時先展開，否則命名列看不到（不另外自動捲動，只捲一次）
