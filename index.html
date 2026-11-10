@@ -2993,16 +2993,16 @@ function showSaveInput(n){
     if(!mobile){ n.closest('.savebar').scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
     const vv=window.visualViewport, vh=vv?vv.height:innerHeight, r=n.closest('.savebar').getBoundingClientRect();
     const top=window.scrollY + r.top - (vv?vv.offsetTop:0) - Math.max(60,(vh-r.height)*0.4); // 放在可見範圍偏上方，避開鍵盤
-    window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+    if(Math.abs(top-window.scrollY)>4) window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
   };
-  requestAnimationFrame(()=>requestAnimationFrame(place)); // 等面板展開的自動捲動開始後再對齊命名列，以這裡為準
-  if(mobile && window.visualViewport){ // 鍵盤彈出會改變可見高度，再對齊一次
-    let t=0; const on=()=>{ clearTimeout(t); t=setTimeout(place,80); };
-    visualViewport.addEventListener('resize',on); setTimeout(()=>visualViewport.removeEventListener('resize',on),1500);
-  }
+  if(!mobile || !window.visualViewport){ requestAnimationFrame(place); return; }
+  // 手機：等鍵盤彈出、可見高度穩定後只捲動一次；沒有鍵盤變化時 0.45 秒後捲動
+  let done=false, t=0; const once=()=>{ if(done) return; done=true; visualViewport.removeEventListener('resize',on); place(); };
+  const on=()=>{ clearTimeout(t); t=setTimeout(once,120); };
+  visualViewport.addEventListener('resize',on); setTimeout(once,450);
 }
 $('#bSave').onclick=()=>{ const bar=$('#savebar'), n=$('#saveName');
-  const cp=$('.p-code'); if(cp && cp.classList.contains('folded')) cp.querySelector('.fold').click(); // 表達式面板收起時先展開，否則命名列看不到
+  const cp=$('.p-code'); if(cp && cp.classList.contains('folded')){ noAutoScroll=true; cp.querySelector('.fold').click(); noAutoScroll=false; } // 表達式面板收起時先展開，否則命名列看不到（不另外自動捲動，只捲一次）
   bar.classList.toggle('show'); n.value=(S.saved?S.saved.name:S.ex.name)+'（自訂）';
   if(bar.classList.contains('show')){ n.focus({preventScroll:true}); showSaveInput(n); } else n.blur(); };
 $('#bSaveNo').onclick=()=>{ $('#savebar').classList.remove('show'); $('#saveName').blur(); };
@@ -3077,6 +3077,7 @@ const Sync=(function(){
 })();
 
 // 「在 After Effects 中套用」與電腦版「數值圖表」：展開時平滑捲到整個面板（電腦版捲右欄、手機版捲整頁；用瀏覽器原生平滑捲動較不會抖動）
+let noAutoScroll=false;
 function howScroll(panel){
   const col=panel.closest('.col'), inCol=col && /auto|scroll/.test(getComputedStyle(col).overflowY) && col.scrollHeight>col.clientHeight;
   const sc=inCol?col:document.documentElement;
@@ -3101,7 +3102,7 @@ function howScroll(panel){
     const toggle=()=>{ const f=!panel.classList.contains('folded');
       set(f); st[key]=f; store.set('folds',st);
       if(key==='how'){ if(!f) requestAnimationFrame(()=>howScroll(panel)); return; }
-      if(!f && ['doc','params','fx','code','make'].includes(key)){ after(); requestAnimationFrame(()=>howScroll(panel)); return; } // 右側其他面板展開時也平滑捲到整個面板
+      if(!f && ['doc','params','fx','code','make'].includes(key)){ after(); if(!noAutoScroll) requestAnimationFrame(()=>howScroll(panel)); return; } // 右側其他面板展開時也平滑捲到整個面板
       if(key==='graph' && !f){ resizeAll(); requestAnimationFrame(()=>howScroll(panel)); return; } // 電腦版與手機版：展開數值圖表時同樣平滑捲到整個面板 // 這個面板沒有畫布，不需重算尺寸，避免捲動中重排而抖動
       after(); };
     b.onclick=toggle; if(h) h.onclick=toggle;
