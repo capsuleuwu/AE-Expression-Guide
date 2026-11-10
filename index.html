@@ -338,7 +338,7 @@ code,.mono{font-family:var(--mono)}
         <select id="labProp" aria-label="套用屬性" hidden></select>
         <button class="btn" id="bCopy">複製</button><button class="btn" id="bReset">重設</button><button class="btn" id="bSave">收藏</button></div>
       <div class="code-wrap fold-body"><pre id="sel" class="sel" aria-hidden="true"></pre><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="表達式編輯器"></textarea></div>
-      <div class="savebar fold-body" id="savebar"><input id="saveName" aria-label="收藏名稱" placeholder="名稱"><button class="btn pri" id="bSaveOk">儲存到「我的表達式」</button><button class="btn" id="bSaveNo">取消</button></div>
+      <div class="savebar fold-body" id="savebar"><input id="saveName" aria-label="收藏名稱" placeholder="名稱" enterkeyhint="done"><button class="btn pri" id="bSaveOk">儲存到「我的表達式」</button><button class="btn" id="bSaveNo">取消</button></div>
     </section>
     <section class="panel p-make" data-fold="make">
       <div class="ph"><h3 id="makeTitle">製作方式</h3></div>
@@ -2978,11 +2978,29 @@ $('#bCopy').onclick=async()=>{ const b=$('#bCopy'); let ok=false;
   try{ await navigator.clipboard.writeText(S.code); ok=true; }catch(e){ try{ ta.focus(); ta.select(); ok=document.execCommand('copy'); }catch(_){} }
   b.textContent=ok?'已複製':'請手動選取複製'; setTimeout(()=>b.textContent='複製',1600); };
 $('#bReset').onclick=()=>{ if(S.saved){ go(S.saved.base); return; } setCode(defaultCode()); renderParams(true); };
-$('#bSave').onclick=()=>{ const bar=$('#savebar'); bar.classList.toggle('show'); const n=$('#saveName'); n.value=(S.saved?S.saved.name:S.ex.name)+'（自訂）'; if(bar.classList.contains('show')) n.focus(); };
-$('#bSaveNo').onclick=()=>$('#savebar').classList.remove('show');
+// 讓收藏命名列出現在畫面上（手機版鍵盤彈出後也維持在可見範圍）
+function showSaveInput(n){
+  const mobile=matchMedia('(max-width:820px)').matches;
+  const place=()=>{
+    if(!mobile){ n.closest('.savebar').scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
+    const vv=window.visualViewport, vh=vv?vv.height:innerHeight, r=n.closest('.savebar').getBoundingClientRect();
+    const top=window.scrollY + r.top - (vv?vv.offsetTop:0) - Math.max(60,(vh-r.height)*0.4); // 放在可見範圍偏上方，避開鍵盤
+    window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+  };
+  requestAnimationFrame(()=>requestAnimationFrame(place)); // 等面板展開的自動捲動開始後再對齊命名列，以這裡為準
+  if(mobile && window.visualViewport){ // 鍵盤彈出會改變可見高度，再對齊一次
+    let t=0; const on=()=>{ clearTimeout(t); t=setTimeout(place,80); };
+    visualViewport.addEventListener('resize',on); setTimeout(()=>visualViewport.removeEventListener('resize',on),1500);
+  }
+}
+$('#bSave').onclick=()=>{ const bar=$('#savebar'), n=$('#saveName');
+  const cp=$('.p-code'); if(cp && cp.classList.contains('folded')) cp.querySelector('.fold').click(); // 表達式面板收起時先展開，否則命名列看不到
+  bar.classList.toggle('show'); n.value=(S.saved?S.saved.name:S.ex.name)+'（自訂）';
+  if(bar.classList.contains('show')){ n.focus({preventScroll:true}); showSaveInput(n); } else n.blur(); };
+$('#bSaveNo').onclick=()=>{ $('#savebar').classList.remove('show'); $('#saveName').blur(); };
 const doSave=()=>{ const name=$('#saveName').value.trim()||S.ex.name; const item={id:'my-'+Date.now().toString(36), base:S.ex.id, name, code:S.code, prop:S.prop};
-  S.savedList.unshift(item); store.set('saved',S.savedList); Sync.dirty(); S.closed.mine=false; $('#savebar').classList.remove('show'); go(item.id); };
-$('#bSaveOk').onclick=doSave; $('#saveName').addEventListener('keydown',e=>{ if(e.key==='Enter') doSave(); if(e.key==='Escape') $('#savebar').classList.remove('show'); });
+  S.savedList.unshift(item); store.set('saved',S.savedList); Sync.dirty(); S.closed.mine=false; $('#saveName').blur(); $('#savebar').classList.remove('show'); go(item.id); };
+$('#bSaveOk').onclick=doSave; $('#saveName').addEventListener('keydown',e=>{ if(e.key==='Enter') doSave(); if(e.key==='Escape'){ $('#savebar').classList.remove('show'); $('#saveName').blur(); } });
 const lp=$('#labProp');
 for(const k in AE.PROP_INFO){ if(k==='anchorPoint'||k==='amount') continue; const o=document.createElement('option'); o.value=k; o.textContent=AE.PROP_INFO[k].label; lp.append(o); }
 lp.onchange=()=>{ S.labProp=lp.value; store.set('labProp',S.labProp); Sync.dirty(); S.saved=null; load('lab'); };
