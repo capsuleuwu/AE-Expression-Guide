@@ -1120,7 +1120,7 @@ else x = easeOut(t, 0, dur, x0, x1);
   how:['Linear：機械、轉圈、載入動畫','Ease in：離開畫面；Ease out：進入畫面；Ease in-out：在畫面內移動','Overshoot：帶點個性的彈出、按鈕','Elastic：俏皮的瞬間，少量使用','Bounce：掉落或著地；Steps：時鐘、計數器、定格動畫'], labels:true,
   code:R`dur = 1.2; // @移動秒數 0.4~2.5 0.1
 steps = 6; // @Steps 格數 2~12 1
-t = Math.min((time % 2.5) / dur, 1); // 0~1 的進度
+t = Math.min((time - inPoint) / dur, 1); // 0~1 的進度
 x0 = 300; x1 = 1620;
 if (index == 1) p = t; // Linear
 else if (index == 2) p = t * t * t; // Ease in
