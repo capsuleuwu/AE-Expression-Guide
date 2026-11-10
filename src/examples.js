@@ -191,6 +191,29 @@ else if (index == 3) x = easeIn(t, 0, dur, x0, x1);
 else x = easeOut(t, 0, dur, x0, x1);
 [x, value[1]]`,
   layer:{ shape:'circle', size:90 }, dup:{ n:4, layout:'col', names:['linear','ease','easeIn','easeOut'], colors:[C.grey,C.blue,C.amber,C.green] } },
+{ id:'interp-easings', make:['新增形狀圖層：用橢圓工具畫一個小圓點','選取圖層，按 P 展開「位置」','按住 Alt（Mac：Option）點擊「位置」的碼錶，貼上表達式','按 Ctrl/Cmd + D 複製成 8 個圖層並上下排開','8 個圖層會依 index 分別套用 Linear、Ease in、Ease out、Ease in-out、Overshoot、Elastic、Bounce、Steps，可以直接比較'], cat:'interp', name:'八種緩動曲線', sig:'p = 0~1 的進度 → 曲線函式 → x0 + (x1 - x0) * p', prop:'position',
+  desc:'先把時間換成 0～1 的進度 p，再用不同的曲線函式改寫 p。Overshoot 和 Elastic 會超過 1（衝過頭），Bounce 在終點彈跳，Steps 一格一格跳。',
+  how:['Linear：機械、轉圈、載入動畫','Ease in：離開畫面；Ease out：進入畫面；Ease in-out：在畫面內移動','Overshoot：帶點個性的彈出、按鈕','Elastic：俏皮的瞬間，少量使用','Bounce：掉落或著地；Steps：時鐘、計數器、定格動畫'], labels:true,
+  code:R`dur = 1.2; // @移動秒數 0.4~2.5 0.1
+steps = 6; // @Steps 格數 2~12 1
+t = Math.min((time % 2.5) / dur, 1); // 0~1 的進度
+x0 = 300; x1 = 1620;
+if (index == 1) p = t; // Linear
+else if (index == 2) p = t * t * t; // Ease in
+else if (index == 3) p = 1 - Math.pow(1 - t, 3); // Ease out
+else if (index == 4) p = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; // Ease in-out
+else if (index == 5) { c = 1.70158; p = 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); } // Overshoot
+else if (index == 6) p = (t == 0 || t == 1) ? t : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * 2 * Math.PI / 3) + 1; // Elastic
+else if (index == 7) { // Bounce
+  n = 7.5625; d = 2.75; u = t;
+  if (u < 1 / d) p = n * u * u;
+  else if (u < 2 / d) { u -= 1.5 / d; p = n * u * u + 0.75; }
+  else if (u < 2.5 / d) { u -= 2.25 / d; p = n * u * u + 0.9375; }
+  else { u -= 2.625 / d; p = n * u * u + 0.984375; }
+}
+else p = Math.floor(t * steps) / steps; // Steps
+[x0 + (x1 - x0) * p, value[1]]`,
+  layer:{ shape:'circle', size:64 }, dup:{ n:8, layout:'col', y0:120, y1:960, names:['Linear','Ease in','Ease out','Ease in-out','Overshoot','Elastic','Bounce','Steps'], colors:[C.grey,C.blue,C.green,C.violet,C.amber,C.coral,C.white,C.amber] } },
 { id:'interp-map-prop', make:['新增形狀圖層：用矩形或橢圓工具在合成中畫一個圖形','按 P 展開「位置」，設左右兩個關鍵影格，再對「位置」加上 loopOut("pingpong") 讓它來回','選取圖層，按 T 展開「不透明度」','按住 Alt（Mac：Option）點擊「不透明度」的碼錶，貼上表達式','調整 fromX、toX：圖層在這兩個 X 之間移動時，會從透明變成清楚'], cat:'interp', name:'用位置控制不透明度', sig:'linear(position[0], …)', prop:'opacity',
   desc:'把自己的 X 座標映射成不透明度：越往右越清楚。輸入不一定是時間，任何屬性數值都可以。',
   how:['位置本身有來回的關鍵影格'],

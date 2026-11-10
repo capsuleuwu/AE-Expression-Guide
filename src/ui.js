@@ -406,7 +406,7 @@ tl.addEventListener('pointermove',e=>{ if(tl._drag) scrubAt(e); });
 tl.addEventListener('pointerup',()=>{ tl._drag=false; });
 
 // ---------- 數值圖表 ----------
-const SER=['#ee6a5c','#62c48a','#4ea4f2','#c9ccd2','#f2a640','#b48af0'];
+const SER=['#ee6a5c','#62c48a','#4ea4f2','#c9ccd2','#f2a640','#b48af0','#e879b0','#6fd0d8']; // 第 7、8 色給超過 6 條線的圖表
 function computeGraph(){
   const L=userLayers()[0]; S.graph=null; if(!L) return;
   const d=AE.PROP_INFO[S.prop].dims;
@@ -434,7 +434,7 @@ function drawGraph(){
   const W=gr.width/DPR, H=gr.height/DPR; gx.setTransform(DPR,0,0,DPR,0,0); gx.clearRect(0,0,W,H);
   const g=S.graph, box=$('#graphBox'), leg=$('#legend');
   let msg=box.querySelector('.graph-msg');
-  if(!g||g.msg){ gr.style.display='none'; if(!msg){ msg=document.createElement('div'); msg.className='graph-msg'; box.append(msg); } msg.textContent=g?g.msg:''; leg.innerHTML=''; return; }
+  if(!g||g.msg){ gr.style.display='none'; if(!msg){ msg=document.createElement('div'); msg.className='graph-msg'; box.append(msg); } msg.textContent=g?g.msg:''; leg.classList.remove('many'); leg.innerHTML=''; return; }
   gr.style.display=''; if(msg) msg.remove();
   // 畫布先前被隱藏時量不到寬度，會以錯誤尺寸建立而被拉伸；顯示後若尺寸不符就重新配置
   if(gr.clientWidth && Math.abs(gr.width-Math.round(gr.clientWidth*DPR))>1){ fitCanvas(gr,170); computeGraph(); return drawGraph(); }
@@ -444,14 +444,14 @@ function drawGraph(){
   if(g.color){
     const n=g.color.length; for(let i=0;i<n-1;i++){ gx.fillStyle=rgba(g.color[i]); gx.fillRect(X(i/(n-1)*COMP.dur),t+8,w/(n-1)+1,h-16); }
     gx.strokeStyle='#33373d'; gx.strokeRect(l,t+8,w,h-16); gx.fillStyle='#8d939c'; gx.textAlign='right'; gx.fillText('顏色',l-8,t+h/2);
-    leg.innerHTML='<span>顏色隨時間變化</span>';
+    leg.classList.remove('many'); leg.innerHTML='<span>顏色隨時間變化</span>';
   } else {
     const Y=v=>t+h-(v-g.mn)/(g.mx-g.mn)*h;
     const ticks=niceTicks(g.mn,g.mx,4); gx.textAlign='right';
     for(const v of ticks){ const y=Y(v); gx.strokeStyle='#26292e'; gx.beginPath(); gx.moveTo(l,y); gx.lineTo(l+w,y); gx.stroke(); gx.fillStyle='#8d939c'; gx.fillText(Math.abs(v)>=1000?Math.round(v):(+v.toFixed(2)),l-8,y); }
     g.series.forEach((s,si)=>{ const c=SER[si%SER.length]; gx.strokeStyle=c; gx.lineWidth=1.8; gx.beginPath(); let started=false;
       s.forEach((v,i)=>{ if(!isFinite(v)){ started=false; return; } const x=X(i/(s.length-1)*COMP.dur), y=Y(v); started?gx.lineTo(x,y):gx.moveTo(x,y); started=true; }); gx.stroke(); gx.lineWidth=1; });
-    leg.innerHTML=''; g.names.forEach((nm,i)=>{ const sp=document.createElement('span'); const ic=document.createElement('i'); ic.style.background=SER[i%SER.length]; sp.append(ic,document.createTextNode(nm)); leg.append(sp); });
+    leg.innerHTML=''; leg.classList.toggle('many',g.names.length>4); g.names.forEach((nm,i)=>{ const sp=document.createElement('span'); const ic=document.createElement('i'); ic.style.background=SER[i%SER.length]; sp.append(ic,document.createTextNode(nm)); leg.append(sp); });
     // 目前值的點
     const L=userLayers()[0]; if(L){ const isAmt=S.prop==='amount'; const nCh=isAmt?Array.from(L.spec.text||'').length:0; const v=isAmt?null:ev(L,S.prop,S.t); const vals=isAmt?g.series.map((_,i)=>AE.evalProp(L.props.amount,S.t,{textIndex:i+1,textTotal:nCh})[0]):S.ex.labels?userLayers().map(U=>{const q=ev(U,S.prop,S.t); return Array.isArray(q)?q[0]:q;}):(Array.isArray(v)?v.slice(0,2):[v]);
       vals.forEach((q,i)=>{ if(!isFinite(q)) return; gx.fillStyle=SER[i%SER.length]; gx.beginPath(); gx.arc(X(S.t),Y(q),4,0,Math.PI*2); gx.fill(); gx.strokeStyle='#1d1f23'; gx.lineWidth=2; gx.stroke(); gx.lineWidth=1; }); }
