@@ -27,11 +27,18 @@ const sideScroll={ raf:0,
 function renderSide(){
   const q=$('#search').value.trim().toLowerCase();
   const side=$('#catList'); side.innerHTML='';
-  const match=e=>!q || (e.name+' '+e.sig+' '+e.desc+' '+e.code).toLowerCase().includes(q);
+  // 搜尋：文字欄位用部分比對；程式碼只比對完整的字（避免像 j 命中 inject 這類無關結果）；符合分類名稱時整個分類都列出
+  const esc=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const wordRe=q?new RegExp('(^|[^A-Za-z0-9_$])'+esc+'(?![A-Za-z0-9_$])','i'):null;
+  const CAT_ALIAS={ js:'js javascript 語法', logic:'if else', text:'text 文字', textanim:'text animator', color:'color 顏色', random:'random' };
+  const catHit=c=>!!q && (c.name+' '+(c.en||'')+' '+(CAT_ALIAS[c.id]||'')).toLowerCase().includes(q);
+  const txt=e=>[e.name,e.sig,e.desc,e.tip||'',(e.how||[]).join(' ')].join(' ').toLowerCase();
+  const codeOf=e=>(e.code||'').replace(/\/\/.*$/gm,'');
+  const match=e=>!q || txt(e).includes(q) || wordRe.test(codeOf(e));
   let total=0;
   const groups=[];
-  if(S.savedList.length){ const items=S.savedList.filter(s=>!q||(s.name+' '+s.code).toLowerCase().includes(q)).map(s=>({saved:s})); if(items.length) groups.push({cat:{id:'mine',name:'我的表達式',en:'收藏的自訂版本'},items}); }
-  for(const c of CATS){ const items=EX.filter(e=>e.cat===c.id && match(e)).map(e=>({ex:e})); if(items.length) groups.push({cat:c,items}); }
+  if(S.savedList.length){ const items=S.savedList.filter(s=>!q||s.name.toLowerCase().includes(q)||wordRe.test((s.code||'').replace(/\/\/.*$/gm,''))).map(s=>({saved:s})); if(items.length) groups.push({cat:{id:'mine',name:'我的表達式',en:'收藏的自訂版本'},items}); }
+  for(const c of CATS){ const all=catHit(c); const items=EX.filter(e=>e.cat===c.id && (all||match(e))).map(e=>({ex:e})); if(items.length) groups.push({cat:c,items}); }
   for(const g of groups){
     total+=g.items.length;
     if(g.cat.id==='lab' && g.items.length===1 && g.items[0].ex){
