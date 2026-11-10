@@ -15,14 +15,14 @@ const S={ ex:null, saved:null, code:'', prop:'', scene:null, t:0, playing:!match
 const sideScroll={ raf:0,
   apply(box,v){ const list=$('#catList'); if(v<0){ list.style.marginTop=(-v)+'px'; box.scrollTop=0; } else { list.style.marginTop=''; box.scrollTop=v; } },
   stop(){ cancelAnimationFrame(this.raf); this.raf=0; $('#catList').style.marginTop=''; },
-  to(box,from,target){ cancelAnimationFrame(this.raf); this.raf=0;
+  to(box,from,target,done){ cancelAnimationFrame(this.raf); this.raf=0;
     const max=box.scrollHeight-box.clientHeight; target=Math.max(0,Math.min(max,target));
-    this.apply(box,from); const d=target-from; if(Math.abs(d)<1){ this.apply(box,target); return; }
+    this.apply(box,from); const d=target-from; if(Math.abs(d)<1){ this.apply(box,target); if(done) done(); return; }
     const dur=Math.min(650,Math.max(320,Math.abs(d)*0.6)), t0=performance.now();
     const ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
     const stopOnUser=()=>{ if(!$('#catList').style.marginTop){ cancelAnimationFrame(this.raf); this.raf=0; } };
     box.addEventListener('wheel',stopOnUser,{once:true,passive:true}); box.addEventListener('touchstart',stopOnUser,{once:true,passive:true});
-    const step=now=>{ const k=Math.min(1,(now-t0)/dur); this.apply(box,from+d*ease(k)); this.raf=k<1?requestAnimationFrame(step):0; };
+    const step=now=>{ const k=Math.min(1,(now-t0)/dur); this.apply(box,from+d*ease(k)); this.raf=k<1?requestAnimationFrame(step):0; if(k>=1&&done) done(); };
     this.raf=requestAnimationFrame(step); } };
 function renderSide(){
   const q=$('#search').value.trim().toLowerCase();
@@ -63,7 +63,12 @@ function renderSide(){
         const from=box.scrollTop+h.getBoundingClientRect().top-y0; // 可能為負（上方分類收起、捲軸已到頂）
         const target=box.scrollTop+wrap.getBoundingClientRect().top-box.getBoundingClientRect().top-barH;
         sideScroll.to(box,from,target);
-      } else box.scrollTop+=h.getBoundingClientRect().top-y0; };
+      } else { // 收起：標題留在原位，再把為了捲動而加的底部留白收掉（平滑捲回，最底部就是空白實驗室）
+        box.scrollTop+=h.getBoundingClientRect().top-y0;
+        const pad=parseFloat(side.style.paddingBottom)||0;
+        if(pad>0){ const maxNoPad=box.scrollHeight-pad-box.clientHeight;
+          if(box.scrollTop>maxNoPad+0.5) sideScroll.to(box,box.scrollTop,Math.max(0,maxNoPad),()=>{ side.style.paddingBottom=''; });
+          else side.style.paddingBottom=''; } } };
     const en=document.createElement('span'); en.className='cat-en'; en.textContent=g.cat.en; en.onclick=()=>h.click(); // 點英文小註記也能展開／收起
     const list=document.createElement('div'); list.className='items';
     for(const it of g.items){
