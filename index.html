@@ -2469,7 +2469,7 @@ function renderSide(){
   // 搜尋：文字欄位用部分比對；程式碼只比對完整的字（避免像 j 命中 inject 這類無關結果）；符合分類名稱時整個分類都列出
   const esc=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   const wordRe=q?new RegExp('(^|[^A-Za-z0-9_$])'+esc+'(?![A-Za-z0-9_$])','i'):null;
-  const CAT_ALIAS={ js:'js javascript 語法', logic:'if else', text:'text 文字', textanim:'text animator', color:'color 顏色', random:'random' };
+  const CAT_ALIAS={ js:'js javascript 語法', logic:'if else', text:'text 文字', textanim:'text animator', color:'color 顏色', random:'random', lab:'空白實驗室' };
   const catHit=c=>!!q && (c.name+' '+(c.en||'')+' '+(CAT_ALIAS[c.id]||'')).toLowerCase().includes(q);
   const txt=e=>[e.name,e.sig,e.desc,e.tip||'',(e.how||[]).join(' ')].join(' ').toLowerCase();
   const codeOf=e=>(e.code||'').replace(/\/\/.*$/gm,'');
@@ -2478,6 +2478,9 @@ function renderSide(){
   const groups=[];
   if(S.savedList.length){ const items=S.savedList.filter(s=>!q||s.name.toLowerCase().includes(q)||wordRe.test((s.code||'').replace(/\/\/.*$/gm,''))).map(s=>({saved:s})); if(items.length) groups.push({cat:{id:'mine',name:'我的表達式',en:'收藏的自訂版本'},items}); }
   for(const c of CATS){ const all=catHit(c); const items=EX.filter(e=>e.cat===c.id && (all||match(e))).map(e=>({ex:e})); if(items.length) groups.push({cat:c,items}); }
+  // 輸入的字是某個分類大標的開頭（例如「時」、「形」、「J」）時，把那個分類排到最前面
+  const starts=c=>!!q && [c.name.toLowerCase(), ...(CAT_ALIAS[c.id]||'').split(' ')].some(w=>w && w.startsWith(q));
+  if(q) groups.sort((a,b)=>starts(b.cat)-starts(a.cat));
   for(const g of groups){
     total+=g.items.length;
     if(g.cat.id==='lab' && g.items.length===1 && g.items[0].ex){
@@ -2942,7 +2945,7 @@ $('#bStart').onclick=()=>{ S.t=0; S.dirty=true; };
 $('#bPrev').onclick=()=>step(-1); $('#bNext').onclick=()=>step(1);
 $('#speed').onchange=e=>{ S.speed=+e.target.value; };
 $('#trailTog').onchange=e=>{ S.trail=e.target.checked; S.dirty=true; };
-$('#search').addEventListener('input',renderSide);
+$('#search').addEventListener('input',()=>{ renderSide(); $('#side').scrollTop=0; }); // 搜尋時回到列表頂端，第一個結果就在最上面
 // 側欄抽屜：開啟時鎖住頁面捲動，避免背景與頂列分離
 let lockY=0;
 function setDrawer(open){
