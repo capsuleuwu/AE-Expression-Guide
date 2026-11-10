@@ -2945,16 +2945,12 @@ $('#bStart').onclick=()=>{ S.t=0; S.dirty=true; };
 $('#bPrev').onclick=()=>step(-1); $('#bNext').onclick=()=>step(1);
 $('#speed').onchange=e=>{ S.speed=+e.target.value; };
 $('#trailTog').onchange=e=>{ S.trail=e.target.checked; S.dirty=true; };
-// iOS 在輸入框聚焦時會自動放大畫面，離開後不會縮回；離開輸入時短暫鎖住縮放比例，讓畫面回到原本大小
+// iOS 在輸入框聚焦時會自動放大畫面，且離開後不會縮回。
+// 只在 iOS 加上 maximum-scale=1：iOS 會因此不再自動放大，但仍保留雙指手動縮放；其他系統不受影響
 (function(){
-  const vp=document.querySelector('meta[name="viewport"]'); if(!vp) return;
-  const base=vp.getAttribute('content');
-  document.addEventListener('focusout',e=>{
-    const t=e.target; if(!t || !/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
-    if(!window.visualViewport || visualViewport.scale<=1.01) return; // 沒有被放大就不處理
-    vp.setAttribute('content',base+', maximum-scale=1');
-    setTimeout(()=>vp.setAttribute('content',base),300); // 還原，之後仍可手動縮放
-  });
+  const vp=document.querySelector('meta[name="viewport"]');
+  const iOS=/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  if(vp && iOS) vp.setAttribute('content',vp.getAttribute('content')+', maximum-scale=1');
 })();
 $('#search').addEventListener('input',()=>{ renderSide(); $('#side').scrollTop=0; }); // 搜尋時回到列表頂端，第一個結果就在最上面
 // 側欄抽屜：開啟時鎖住頁面捲動，避免背景與頂列分離
