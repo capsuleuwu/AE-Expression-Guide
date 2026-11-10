@@ -2498,7 +2498,7 @@ function renderSide(){
         side.style.paddingBottom='';
         const below=side.getBoundingClientRect().bottom-wrap.getBoundingClientRect().top;
         const need=box.clientHeight-barH-below-parseFloat(getComputedStyle(box).paddingBottom||0);
-        if(need>0) side.style.paddingBottom=need+'px'; // 底部留白，讓靠下方的分類也能捲到最上面
+        if(need>0){ side.style.paddingBottom=need+'px'; side.dataset.padFor=g.cat.id; } // 底部留白，讓靠下方的分類也能捲到最上面
         const from=box.scrollTop+h.getBoundingClientRect().top-y0; // 可能為負（上方分類收起、捲軸已到頂）
         const target=box.scrollTop+wrap.getBoundingClientRect().top-box.getBoundingClientRect().top-barH;
         sideScroll.to(box,from,target);
@@ -2525,6 +2525,8 @@ function renderSide(){
     }
     wrap.append(h,en,list); side.append(wrap);
   }
+  // 搜尋中、或留白所屬的分類已不是展開狀態（例如切到別的範例）時，拿掉底部留白，避免列表下方空一大塊
+  if(side.style.paddingBottom && (q || S.closed[side.dataset.padFor]!==false)){ sideScroll.stop(); side.style.paddingBottom=''; }
   if(!total){ const e=document.createElement('div'); e.className='empty-search'; e.textContent='沒有符合「'+q+'」的表達式，試試 wiggle、loop、文字、顏色。'; side.append(e); }
 }
 const exById=id=>EX.find(e=>e.id===id);
