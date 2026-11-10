@@ -2705,9 +2705,11 @@ const comp=$('#comp'), cx=comp.getContext('2d');
 const tl=$('#tl'), tx=tl.getContext('2d');
 const gr=$('#graph'), gx=gr.getContext('2d');
 let DPR=1;
-function fitCanvas(c,h){ const w=c.clientWidth||300; c.width=Math.round(w*DPR); c.height=Math.round((h||c.clientHeight)*DPR); if(h) c.style.height=h+'px'; }
+function fitCanvas(c,h){ const w=c.clientWidth||300, W=Math.round(w*DPR), H=Math.round((h||c.clientHeight)*DPR);
+  if(h && c.style.height!==h+'px') c.style.height=h+'px';
+  if(c.width!==W) c.width=W; if(c.height!==H) c.height=H; } // 尺寸沒變就不重設，避免捲動時清空畫布造成閃動
 function resizeAll(){ DPR=Math.min(2,window.devicePixelRatio||1);
-  const w=comp.clientWidth||600; comp.width=Math.round(w*DPR); comp.height=Math.round(w*9/16*DPR);
+  const w=comp.clientWidth||600, CW=Math.round(w*DPR), CH=Math.round(w*9/16*DPR); if(comp.width!==CW) comp.width=CW; if(comp.height!==CH) comp.height=CH;
   fitCanvas(tl,tlHeight()); fitCanvas(gr,170); S.graphDirty=true; S.dirty=true; }
 const rgba=(c,a)=>'rgba('+[0,1,2].map(i=>Math.round(Math.min(1,Math.max(0,c[i]))*255)).join(',')+','+Math.min(1,Math.max(0,(c[3]==null?1:c[3])*(a==null?1:a)))+')';
 
@@ -2919,15 +2921,21 @@ function drawGraph(){
 function setPlaying(p){ S.playing=p; $('#playIco').innerHTML=p?'<path d="M3 2h3v10H3zM8 2h3v10H8z"/>':'<path d="M3 1.5v11l9-5.5z"/>'; $('#bPlay').setAttribute('aria-label',p?'暫停':'播放'); }
 function step(n){ setPlaying(false); S.t=((Math.round(S.t*COMP.fps)+n)%(COMP.dur*COMP.fps)+COMP.dur*COMP.fps)%(COMP.dur*COMP.fps)/COMP.fps; S.dirty=true; }
 let lastTs=null, lastTc='';
+// 只重畫目前看得到的畫布；捲回畫面時再補畫
+const onScreen={comp:true,tl:true,gr:true}, offDirty={};
+if(window.IntersectionObserver){ const io=new IntersectionObserver(es=>{ for(const e of es){ const k=e.target===comp?'comp':e.target===tl?'tl':'gr'; onScreen[k]=e.isIntersecting; if(e.isIntersecting && offDirty[k]){ offDirty[k]=false; S.dirty=true; } } },{rootMargin:'100px'}); [comp,tl,document.querySelector('.p-graph')].forEach(c=>io.observe(c)); } // 圖表觀察整個面板：圖表隱藏時仍要更新提示文字
 function frame(ts){
   if(lastTs==null) lastTs=ts; const dt=Math.min(0.1,(ts-lastTs)/1000); lastTs=ts;
   if(S.playing){ S.t+=dt*S.speed; if(S.t>=COMP.dur) S.t%=COMP.dur; S.dirty=true; }
-  if(S.graphDirty){ S.graphDirty=false; const h=tlHeight(); if(Math.abs(tl.height/DPR-h)>1) fitCanvas(tl,h); computeGraph();
+  let gNew=false; if(S.graphDirty){ S.graphDirty=false; gNew=true; const h=tlHeight(); if(Math.abs(tl.height/DPR-h)>1) fitCanvas(tl,h); computeGraph();
     if(gr.clientWidth && Math.abs(gr.width-Math.round(gr.clientWidth*DPR))>1){ fitCanvas(gr,170); computeGraph(); } } // 圖表剛從隱藏變成顯示：先配置正確尺寸再取樣，避免同一條線先後畫兩次而抖動
   if(S.dirty){ S.dirty=false;
     const tf=Math.floor(S.t*COMP.fps+1e-6); const tcs=tf+'';
     if(tcs!==lastTc){ lastTc=tcs; const f=tf%COMP.fps, s=Math.floor(tf/COMP.fps); $('#tc').innerHTML='0:00:'+String(s).padStart(2,'0')+':'+String(f).padStart(2,'0')+'<small>'+S.t.toFixed(2)+' 秒 · 第 '+tf+' 格</small>'; }
-    drawComp(); drawTL(); drawGraph(); updateReadout(); }
+    if(onScreen.comp) drawComp(); else offDirty.comp=true;
+    if(onScreen.tl) drawTL(); else offDirty.tl=true;
+    if(onScreen.gr||gNew) drawGraph(); else offDirty.gr=true; // 換範例時一定重畫一次（顯示／隱藏圖表）
+    updateReadout(); }
   requestAnimationFrame(frame);
 }
 
@@ -2962,7 +2970,7 @@ function setDrawer(open){
   else { body.classList.remove('drawer'); if(body.classList.contains('locked')){ body.classList.remove('locked'); body.style.top=''; window.scrollTo(0,lockY); } }
   $('#menuBtn').setAttribute('aria-expanded',String(open));
 }
-function measureTop(){ document.documentElement.style.setProperty('--top-h',$('.top').offsetHeight+'px'); }
+let topH=''; function measureTop(){ const v=$('.top').offsetHeight+'px'; if(v!==topH){ topH=v; document.documentElement.style.setProperty('--top-h',v); } }
 measureTop(); window.addEventListener('resize',measureTop);
 $('#menuBtn').onclick=()=>setDrawer(!document.body.classList.contains('drawer'));
 $('#scrim').onclick=()=>setDrawer(false);
@@ -3005,7 +3013,7 @@ const lp=$('#labProp');
 for(const k in AE.PROP_INFO){ if(k==='anchorPoint'||k==='amount') continue; const o=document.createElement('option'); o.value=k; o.textContent=AE.PROP_INFO[k].label; lp.append(o); }
 lp.onchange=()=>{ S.labProp=lp.value; store.set('labProp',S.labProp); Sync.dirty(); S.saved=null; load('lab'); };
 window.addEventListener('hashchange',()=>load(location.hash.slice(1)));
-let rzT=null; window.addEventListener('resize',()=>{ clearTimeout(rzT); rzT=setTimeout(resizeAll,80); });
+let rzT=null, lastW=innerWidth, lastDPR=window.devicePixelRatio; window.addEventListener('resize',()=>{ if(innerWidth===lastW && window.devicePixelRatio===lastDPR) return; lastW=innerWidth; lastDPR=window.devicePixelRatio; clearTimeout(rzT); rzT=setTimeout(resizeAll,80); }); // 手機捲動時網址列伸縮只改變高度，不需重算
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ S.dirty=true; });
 
 
