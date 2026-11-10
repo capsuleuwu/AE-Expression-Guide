@@ -198,20 +198,54 @@ else x = easeOut(t, 0, dur, x0, x1);
 steps = 6; // @Steps 格數 2~12 1
 t = Math.min((time - inPoint) / dur, 1); // 0~1 的進度
 x0 = 300; x1 = 1620;
-if (index == 1) p = t; // Linear
-else if (index == 2) p = t * t * t; // Ease in
-else if (index == 3) p = 1 - Math.pow(1 - t, 3); // Ease out
-else if (index == 4) p = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; // Ease in-out
-else if (index == 5) { c = 1.70158; p = 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); } // Overshoot
-else if (index == 6) p = (t == 0 || t == 1) ? t : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * 2 * Math.PI / 3) + 1; // Elastic
-else if (index == 7) { // Bounce
-  n = 7.5625; d = 2.75; u = t;
-  if (u < 1 / d) p = n * u * u;
-  else if (u < 2 / d) { u -= 1.5 / d; p = n * u * u + 0.75; }
-  else if (u < 2.5 / d) { u -= 2.25 / d; p = n * u * u + 0.9375; }
-  else { u -= 2.625 / d; p = n * u * u + 0.984375; }
+
+// ───── 1. Linear ─────
+if (index == 1) {
+  p = t;
 }
-else p = Math.floor(t * steps) / steps; // Steps
+// ───── 2. Ease in ─────
+else if (index == 2) {
+  p = t * t * t;
+}
+// ───── 3. Ease out ─────
+else if (index == 3) {
+  p = 1 - Math.pow(1 - t, 3);
+}
+// ───── 4. Ease in-out ─────
+else if (index == 4) {
+  if (t < 0.5) p = 4 * t * t * t;
+  else p = 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+// ───── 5. Overshoot ─────
+else if (index == 5) {
+  c = 1.70158;
+  p = 1 + (c + 1) * Math.pow(t - 1, 3)
+        + c * Math.pow(t - 1, 2);
+}
+// ───── 6. Elastic ─────
+else if (index == 6) {
+  if (t == 0 || t == 1) p = t;
+  else p = Math.pow(2, -10 * t)
+         * Math.sin((t * 10 - 0.75) * 2 * Math.PI / 3) + 1;
+}
+// ───── 7. Bounce ─────
+else if (index == 7) {
+  n = 7.5625; d = 2.75; u = t;
+  if (u < 1 / d) {
+    p = n * u * u;
+  } else if (u < 2 / d) {
+    u -= 1.5 / d; p = n * u * u + 0.75;
+  } else if (u < 2.5 / d) {
+    u -= 2.25 / d; p = n * u * u + 0.9375;
+  } else {
+    u -= 2.625 / d; p = n * u * u + 0.984375;
+  }
+}
+// ───── 8. Steps ─────
+else {
+  p = Math.floor(t * steps) / steps;
+}
+
 [x0 + (x1 - x0) * p, value[1]]`,
   layer:{ shape:'circle', size:64 }, dup:{ n:8, layout:'col', y0:120, y1:960, names:['Linear','Ease in','Ease out','Ease in-out','Overshoot','Elastic','Bounce','Steps'], colors:[C.grey,C.blue,C.green,C.violet,C.amber,C.coral,C.white,C.amber] } },
 { id:'interp-map-prop', make:['新增形狀圖層：用矩形或橢圓工具在合成中畫一個圖形','按 P 展開「位置」，設左右兩個關鍵影格，再對「位置」加上 loopOut("pingpong") 讓它來回','選取圖層，按 T 展開「不透明度」','按住 Alt（Mac：Option）點擊「不透明度」的碼錶，貼上表達式','調整 fromX、toX：圖層在這兩個 X 之間移動時，會從透明變成清楚'], cat:'interp', name:'用位置控制不透明度', sig:'linear(position[0], …)', prop:'opacity',
