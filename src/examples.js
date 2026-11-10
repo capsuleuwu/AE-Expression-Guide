@@ -1089,10 +1089,10 @@ sy = 100 + speed * stretch - hit * squash;
   make:['新增形狀圖層：畫一個細長的長方形','用錨點工具（Y）把錨點移到長條底端','選取圖層，按 R 展開「旋轉」','按住 Alt（Mac：Option）點擊「旋轉」的碼錶，貼上表達式','調整 back（往後拉的角度）、target（目標角度）與 decay（停下速度）'],
   cat:'physics',
   name:'預備動作',
-  sig:'先往反方向拉，再衝過頭回彈',
+  sig:'t < prep ? -back : target - (target+back)·cos(4πu)·e^(-decay·u)',
   prop:'rotation',
   desc:'動畫原則中的預備動作：要往前之前先往後拉一下，再快速衝到目標並回彈，讓動作更有力量。',
-  how:['錨點設在長條底端，看起來像揮動的手臂'],
+  how:['先往反方向拉，再衝過頭回彈'],
   code:R`back = 25; // @預備角度 0~60 1
 target = 120; // @目標角度 -180~180 1
 prep = 0.4; // @預備秒數 0.1~1 0.05
