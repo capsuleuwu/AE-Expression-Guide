@@ -193,7 +193,7 @@ else x = easeOut(t, 0, dur, x0, x1);
   layer:{ shape:'circle', size:90 }, dup:{ n:4, layout:'col', names:['linear','ease','easeIn','easeOut'], colors:[C.grey,C.blue,C.amber,C.green] } },
 { id:'interp-easings', make:['新增形狀圖層：用橢圓工具畫一個小圓點','選取圖層，按 P 展開「位置」','按住 Alt（Mac：Option）點擊「位置」的碼錶，貼上表達式','按 Ctrl/Cmd + D 複製成 8 個圖層並上下排開','8 個圖層會依 index 分別套用 Linear、Ease in、Ease out、Ease in-out、Overshoot、Elastic、Bounce、Steps，可以直接比較'], cat:'interp', name:'八種緩動曲線', sig:'p = 0~1 的進度 → 曲線函式 → x0 + (x1 - x0) * p', prop:'position',
   desc:'先把時間換成 0～1 的進度 p，再用不同的曲線函式改寫 p。Overshoot 和 Elastic 會超過 1（衝過頭），Bounce 在終點彈跳，Steps 一格一格跳。',
-  how:['Linear：機械、轉圈、載入動畫','Ease in：離開畫面；Ease out：進入畫面；Ease in-out：在畫面內移動','Overshoot：帶點個性的彈出、按鈕','Elastic：俏皮的瞬間，少量使用','Bounce：掉落或著地；Steps：時鐘、計數器、定格動畫'], labels:true,
+  how:['Linear：機械、轉圈、載入動畫','Ease in：離開畫面','Ease out：進入畫面','Ease in-out：在畫面內移動','Overshoot：帶點個性的彈出、按鈕','Elastic：俏皮的瞬間，少量使用','Bounce：掉落或著地','Steps：時鐘、計數器、定格動畫'], labels:true,
   code:R`dur = 1.2; // @移動秒數 0.4~2.5 0.1
 steps = 6; // @Steps 格數 2~12 1
 t = Math.min((time - inPoint) / dur, 1); // 0~1 的進度
