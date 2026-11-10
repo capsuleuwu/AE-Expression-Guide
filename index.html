@@ -3076,7 +3076,7 @@ function howScroll(panel){
       set(f); st[key]=f; store.set('folds',st);
       if(key==='how'){ if(!f) requestAnimationFrame(()=>howScroll(panel)); return; }
       if(!f && ['doc','params','fx','code','make'].includes(key)){ after(); requestAnimationFrame(()=>howScroll(panel)); return; } // 右側其他面板展開時也平滑捲到整個面板
-      if(key==='graph' && !f && matchMedia('(min-width:821px)').matches){ resizeAll(); requestAnimationFrame(()=>howScroll(panel)); return; } // 電腦版：展開數值圖表時同樣平滑捲到整個面板 // 這個面板沒有畫布，不需重算尺寸，避免捲動中重排而抖動
+      if(key==='graph' && !f){ resizeAll(); requestAnimationFrame(()=>howScroll(panel)); return; } // 電腦版與手機版：展開數值圖表時同樣平滑捲到整個面板 // 這個面板沒有畫布，不需重算尺寸，避免捲動中重排而抖動
       after(); };
     b.onclick=toggle; if(h) h.onclick=toggle;
     ph.append(b);
