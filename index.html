@@ -264,6 +264,7 @@ code,.mono{font-family:var(--mono)}
 .code-wrap textarea{z-index:2}
 .code-wrap textarea::selection{background:transparent;color:transparent}
 .syncwrap{position:relative}
+.views{flex:none;height:34px;padding:0 11px;border:1px solid var(--line);border-radius:7px;background:var(--panel-2);display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);white-space:nowrap}.views b{color:var(--ink);font:600 13px var(--mono)}.views[hidden]{display:none}@media (max-width:420px){.views .vl{display:none}}
 #syncBtn{font-size:13px}
 #syncBtn .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 #syncBtn.ok .dot{background:#62c48a}#syncBtn.busy .dot{background:var(--expr)}#syncBtn.off .dot{background:var(--bad)}
@@ -281,13 +282,7 @@ code,.mono{font-family:var(--mono)}
   <button class="iconbtn" id="menuBtn" aria-label="開啟分類清單"><svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.6" fill="none"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
   <div class="brand"><b>AE 表達式圖鑑</b></div>
   <span class="grow"></span>
-  <div class="syncwrap"><button class="iconbtn" id="syncBtn" aria-expanded="false" aria-controls="syncPop"><span class="dot" id="syncDot"></span><span id="syncTxt">帳號同步</span></button>
-    <div class="syncpop" id="syncPop" hidden>
-      <b id="syncTitle">帳號同步</b>
-      <p id="syncDesc"></p>
-      <ul class="hint"><li>同步內容：「我的表達式」收藏、各範例修改過的程式碼、實驗室屬性設定。</li><li>在另一台電腦或手機登入同一個 Claude 帳號、打開這個頁面，資料會自動出現。</li><li>修改後約 1 秒自動上傳，其他裝置開著時會即時更新。</li></ul>
-      <button class="btn" id="syncNow" type="button">立即同步</button>
-    </div></div>
+  <div class="views" id="views" title="網站瀏覽次數" hidden><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M1 8s2.6-5 7-5 7 5 7 5-2.6 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.2"/></svg><span class="vl">瀏覽次數</span><b id="viewsN">—</b></div>
 </header>
 <div class="scrim" id="scrim"></div>
 <div class="app">
@@ -3022,62 +3017,23 @@ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ S.dirty
 
 
 // ---------- 帳號同步（以 Claude 帳號識別，存在此頁的個人私有資料區） ----------
-const Sync=(function(){
-  let db=null, ref=null, ready=false, timer=null, writing=false, again=false, lastSent='', status='local';
-  const btn=$('#syncBtn'), txt=$('#syncTxt'), title=$('#syncTitle'), desc=$('#syncDesc');
-  function show(st,msg){ status=st; btn.classList.remove('ok','busy','off'); if(st==='ok') btn.classList.add('ok'); if(st==='busy'||st==='loading') btn.classList.add('busy'); if(st==='off') btn.classList.add('off');
-    txt.textContent = st==='ok'?'已同步' : st==='busy'?'同步中…' : st==='loading'?'連線中…' : st==='off'?'未同步':'僅存本機';
-    title.textContent = st==='ok'?'已綁定你的 Claude 帳號' : st==='local'||st==='off'?'目前只存在這台裝置' : '正在連線到你的帳號';
-    desc.textContent = msg; }
-  function payload(){ return { saved:S.savedList, codes:S.codes, labProp:S.labProp, v:1 }; }
-  function applyRemote(d){
-    const before=JSON.stringify(payload());
-    S.savedList=Array.isArray(d.saved)?d.saved.filter(x=>x&&x.id&&x.base&&typeof x.code==='string'):[];
-    S.codes=(d.codes&&typeof d.codes==='object')?Object.assign({},d.codes):{};
-    if(d.labProp && AE.PROP_INFO[d.labProp]) S.labProp=d.labProp;
-    store.set('saved',S.savedList); store.set('codes',S.codes); store.set('labProp',S.labProp);
-    if(JSON.stringify(payload())===before) return;
-    const id=location.hash.slice(1);
-    if(document.activeElement===$('#code')){ renderSide(); return; } // 正在編輯時不打斷，只更新清單
-    load(id||'time-rotate');
-  }
-  function merge(d){ // 第一次連線：雲端與本機合併，兩邊都不遺失
-    const ids=new Set((d.saved||[]).map(x=>x.id));
-    const saved=(d.saved||[]).concat(S.savedList.filter(x=>!ids.has(x.id)));
-    return { saved, codes:Object.assign({},S.codes,d.codes||{}), labProp:d.labProp||S.labProp, v:1 };
-  }
-  async function flush(){
-    if(!ready) return; if(writing){ again=true; return; }
-    const body=payload(); const js=JSON.stringify(body); if(js===lastSent) { show('ok','收藏與修改已存到你的帳號，在其他裝置用同一個 Claude 帳號開啟此頁即可使用。'); return; }
-    writing=true; show('busy','正在上傳變更…');
-    try{ await ref.set(JSON.parse(js)); lastSent=js; show('ok','收藏與修改已存到你的帳號，在其他裝置用同一個 Claude 帳號開啟此頁即可使用。'); }
-    catch(e){ show('off', e&&e.code==='quota_exceeded'?'帳號儲存空間已滿，請刪除一些收藏後再試。':'上傳失敗，變更仍保存在這台裝置，稍後會再試一次。'); setTimeout(dirty,8000); }
-    finally{ writing=false; if(again){ again=false; dirty(); } }
-  }
-  function dirty(){ if(!ready) return; clearTimeout(timer); show('busy','有尚未上傳的變更…'); timer=setTimeout(flush,900); }
-  async function init(){
-    show('loading','正在確認你的 Claude 帳號…');
-    if(!window.claude || !window.claude.use){ show('local','這個環境無法連到帳號，資料只存在這台裝置的瀏覽器。'); return; }
-    let user;
-    try{ [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]); }catch(e){ db=null; }
-    const uid = user ? await user.id().catch(()=>null) : null;
-    if(!db || !uid){ show('local','需要登入 Claude 才能同步。目前資料只存在這台裝置的瀏覽器。'); return; }
-    ref=db.doc('data/users/'+uid+'/state');
-    let first=true;
-    const to=setTimeout(()=>{ if(first) show('off','暫時連不上帳號資料，變更會先存在這台裝置。'); },10000);
-    ref.onSnapshot(snap=>{
-      if(snap.metadata.hasPendingWrites) return;
-      if(first){ if(snap.metadata.fromCache) return; first=false; clearTimeout(to); ready=true;
-        if(snap.exists){ const m=merge(snap.data()); applyRemote(m); lastSent=JSON.stringify(snap.data()); if(JSON.stringify(payload())!==lastSent) dirty(); else show('ok','收藏與修改已存到你的帳號，在其他裝置用同一個 Claude 帳號開啟此頁即可使用。'); }
-        else dirty();
-        return; }
-      if(snap.exists){ const d=snap.data(); const js=JSON.stringify(d); if(js===lastSent) return; lastSent=js; applyRemote(d); show('ok','已收到其他裝置的更新。'); }
-    }, err=>{ clearTimeout(to); show('off', err&&err.code==='revoked'?'這個頁面的存取權已變更，資料只存在這台裝置。':'與帳號的連線中斷，資料只存在這台裝置。重新開啟頁面可再連線。'); ready=false; });
-  }
-  btn.onclick=()=>{ const p=$('#syncPop'); p.hidden=!p.hidden; btn.setAttribute('aria-expanded',String(!p.hidden)); };
-  document.addEventListener('click',e=>{ const p=$('#syncPop'); if(!p.hidden && !e.target.closest('.syncwrap')){ p.hidden=true; btn.setAttribute('aria-expanded','false'); } });
-  $('#syncNow').onclick=()=>{ if(ready){ clearTimeout(timer); lastSent=''; flush(); } else init(); };
-  return { init, dirty };
+// 帳號同步已移除：收藏與修改只存在這台裝置的瀏覽器
+const Sync={ dirty(){}, init(){} };
+
+// ---------- 網站瀏覽次數（Abacus 免費計數服務） ----------
+(function(){
+  const box=$('#views'), out=$('#viewsN'); if(!box) return;
+  const API='https://abacus.jasoncameron.dev', NS='capsuleuwu-ae-expression-guide', KEY='visits';
+  const onSite=/(^|\.)github\.io$/.test(location.hostname); // 只有正式網站（GitHub）才累加
+  let counted=false; try{ counted=sessionStorage.getItem('ae-viewed')==='1'; }catch(e){}
+  const act=(onSite && !counted)?'hit':'get'; // 同一個分頁重新整理不重複計算
+  const ctl=window.AbortController?new AbortController():null; const to=setTimeout(()=>ctl&&ctl.abort(),6000);
+  fetch(API+'/'+act+'/'+NS+'/'+KEY,{signal:ctl?ctl.signal:undefined,cache:'no-store'})
+    .then(r=>r.ok?r.json():Promise.reject(r.status))
+    .then(d=>{ clearTimeout(to); const v=Number(d&&d.value); if(!isFinite(v)) throw 0;
+      out.textContent=v.toLocaleString('zh-TW'); box.hidden=false;
+      if(act==='hit'){ try{ sessionStorage.setItem('ae-viewed','1'); }catch(e){} } })
+    .catch(()=>{ clearTimeout(to); box.hidden=true; }); // 連不到計數服務時直接隱藏，不影響其他功能
 })();
 
 // 「在 After Effects 中套用」與電腦版「數值圖表」：展開時平滑捲到整個面板（電腦版捲右欄、手機版捲整頁；用瀏覽器原生平滑捲動較不會抖動）

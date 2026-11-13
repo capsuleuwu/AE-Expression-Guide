@@ -264,6 +264,7 @@ code,.mono{font-family:var(--mono)}
 .code-wrap textarea{z-index:2}
 .code-wrap textarea::selection{background:transparent;color:transparent}
 .syncwrap{position:relative}
+.views{flex:none;height:34px;padding:0 11px;border:1px solid var(--line);border-radius:7px;background:var(--panel-2);display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);white-space:nowrap}.views b{color:var(--ink);font:600 13px var(--mono)}.views[hidden]{display:none}@media (max-width:420px){.views .vl{display:none}}
 #syncBtn{font-size:13px}
 #syncBtn .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 #syncBtn.ok .dot{background:#62c48a}#syncBtn.busy .dot{background:var(--expr)}#syncBtn.off .dot{background:var(--bad)}
@@ -281,13 +282,7 @@ code,.mono{font-family:var(--mono)}
   <button class="iconbtn" id="menuBtn" aria-label="開啟分類清單"><svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.6" fill="none"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
   <div class="brand"><b>AE 表達式圖鑑</b></div>
   <span class="grow"></span>
-  <div class="syncwrap"><button class="iconbtn" id="syncBtn" aria-expanded="false" aria-controls="syncPop"><span class="dot" id="syncDot"></span><span id="syncTxt">帳號同步</span></button>
-    <div class="syncpop" id="syncPop" hidden>
-      <b id="syncTitle">帳號同步</b>
-      <p id="syncDesc"></p>
-      <ul class="hint"><li>同步內容：「我的表達式」收藏、各範例修改過的程式碼、實驗室屬性設定。</li><li>在另一台電腦或手機登入同一個 Claude 帳號、打開這個頁面，資料會自動出現。</li><li>修改後約 1 秒自動上傳，其他裝置開著時會即時更新。</li></ul>
-      <button class="btn" id="syncNow" type="button">立即同步</button>
-    </div></div>
+  <div class="views" id="views" title="網站瀏覽次數" hidden><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M1 8s2.6-5 7-5 7 5 7 5-2.6 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.2"/></svg><span class="vl">瀏覽次數</span><b id="viewsN">—</b></div>
 </header>
 <div class="scrim" id="scrim"></div>
 <div class="app">
