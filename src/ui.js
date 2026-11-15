@@ -637,4 +637,5 @@ setPlaying(S.playing);
 Sync.init();
 load(location.hash.slice(1)||'time-rotate');
 requestAnimationFrame(frame);
+requestAnimationFrame(()=>document.documentElement.classList.remove('booting')); // 第一格畫好後再顯示
 })();
