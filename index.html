@@ -3020,15 +3020,16 @@ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ S.dirty
 // 帳號同步已移除：收藏與修改只存在這台裝置的瀏覽器
 const Sync={ dirty(){}, init(){} };
 
-// ---------- 網站瀏覽次數（hits.sh 計數徽章） ----------
-// 用圖片載入計數，不受跨網域限制，手機瀏覽器也能正常顯示；每次開啟網頁 +1
+// ---------- 網站瀏覽次數（kounter 計數徽章） ----------
+// 用圖片載入計數，不受跨網域限制。同一個分頁第一次開啟才 +1，重新整理只讀取不累加
 (function(){
   const box=$('#views'), out=$('#viewsN'); if(!box) return;
   if(!/(^|\.)github\.io$/.test(location.hostname)){ box.hidden=true; return; } // 只在正式網站（GitHub）計數與顯示
+  let seen=false; try{ seen=sessionStorage.getItem('ae-viewed')==='1'; }catch(e){}
   const img=new Image(); img.alt='瀏覽次數'; img.className='views-badge'; img.decoding='async';
-  img.onload=()=>{ out.replaceWith(img); box.hidden=false; };
+  img.onload=()=>{ out.replaceWith(img); box.hidden=false; if(!seen){ try{ sessionStorage.setItem('ae-viewed','1'); }catch(e){} } };
   img.onerror=()=>{ out.textContent='—'; box.hidden=false; };
-  img.src='https://hits.sh/capsuleuwu.github.io/AE-Expression-Guide.svg?style=flat-square&label=%20&color=1d1f23&labelColor=1d1f23';
+  img.src='https://kounter.kerolloz.dev/badge/capsuleuwu.ae-expression-guide.views?style=flat-square&label=&color=1d1f23&labelColor=1d1f23'+(seen?'&silent=true':'')+'&t='+Date.now(); // t：避免瀏覽器快取舊數字
 })();
 
 // 「在 After Effects 中套用」與電腦版「數值圖表」：展開時平滑捲到整個面板（電腦版捲右欄、手機版捲整頁；用瀏覽器原生平滑捲動較不會抖動）
