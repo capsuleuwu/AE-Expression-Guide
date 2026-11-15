@@ -592,9 +592,9 @@ const Sync={ dirty(){}, init(){} };
   const box=$('#views'), out=$('#viewsN'); if(!box) return;
   if(!/(^|\.)github\.io$/.test(location.hostname)){ box.hidden=true; return; } // 只在正式網站（GitHub）計數與顯示
   const img=new Image(); img.alt='瀏覽次數'; img.className='views-badge'; img.decoding='async';
-  img.onload=()=>{ out.replaceWith(img); box.querySelector('.vl')?.remove(); box.hidden=false; };
+  img.onload=()=>{ out.replaceWith(img); box.hidden=false; };
   img.onerror=()=>{ out.textContent='—'; box.hidden=false; };
-  img.src='https://hits.sh/capsuleuwu.github.io/AE-Expression-Guide.svg?style=flat-square&label=%E7%80%8F%E8%A6%BD%E6%AC%A1%E6%95%B8&color=2b2f36&labelColor=2b2f36';
+  img.src='https://hits.sh/capsuleuwu.github.io/AE-Expression-Guide.svg?style=flat-square&label=%20&color=1d1f23&labelColor=1d1f23';
 })();
 
 // 「在 After Effects 中套用」與電腦版「數值圖表」：展開時平滑捲到整個面板（電腦版捲右欄、手機版捲整頁；用瀏覽器原生平滑捲動較不會抖動）
