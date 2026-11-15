@@ -595,7 +595,7 @@ const Sync={ dirty(){}, init(){} };
   const img=new Image(); img.alt='瀏覽次數'; img.className='views-badge'; img.decoding='async';
   img.onload=()=>{ out.replaceWith(img); box.hidden=false; if(!seen){ try{ sessionStorage.setItem('ae-viewed','1'); }catch(e){} } };
   img.onerror=()=>{ out.textContent='—'; box.hidden=false; };
-  img.src='https://kounter.kerolloz.dev/badge/capsuleuwu.ae-expression-guide.pageviews?style=flat-square&label=&color=1d1f23&labelColor=1d1f23'+(seen?'&silent=true':'')+'&t='+Date.now(); // t：避免瀏覽器快取舊數字
+  img.src='https://kounter.kerolloz.dev/badge/capsuleuwu.ae-expression-guide.pv?style=flat-square&label=&color=1d1f23&labelColor=1d1f23'+(seen?'&silent=true':'')+'&t='+Date.now(); // t：避免瀏覽器快取舊數字
 })();
 
 // 「在 After Effects 中套用」與電腦版「數值圖表」：展開時平滑捲到整個面板（電腦版捲右欄、手機版捲整頁；用瀏覽器原生平滑捲動較不會抖動）
