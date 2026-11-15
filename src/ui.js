@@ -586,28 +586,15 @@ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ S.dirty
 // 帳號同步已移除：收藏與修改只存在這台裝置的瀏覽器
 const Sync={ dirty(){}, init(){} };
 
-// ---------- 網站瀏覽次數（Abacus 免費計數服務） ----------
+// ---------- 網站瀏覽次數（hits.sh 計數徽章） ----------
+// 用圖片載入計數，不受跨網域限制，手機瀏覽器也能正常顯示；每次開啟網頁 +1
 (function(){
   const box=$('#views'), out=$('#viewsN'); if(!box) return;
-  const API='https://abacus.jasoncameron.dev', NS='capsuleuwu-ae-expression-guide', KEY='visits';
-  const onSite=/(^|\.)github\.io$/.test(location.hostname); // 只有正式網站（GitHub）才累加
-  const ls={ get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} } };
-  const ss={ get(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }, set(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){} } };
-  const show=v=>{ out.textContent=Number(v).toLocaleString('zh-TW'); box.hidden=false; };
-  // 先顯示上次取得的數字，計數器不會「消失」
-  const cached=ls.get('ae-views'); if(cached && isFinite(+cached)) show(cached); else if(onSite){ out.textContent='—'; box.hidden=false; }
-  const act=(onSite && ss.get('ae-viewed')!=='1')?'hit':'get'; // 同一個分頁重新整理不重複計算
-  const url=API+'/'+act+'/'+NS+'/'+KEY;
-  const ok=d=>{ const v=Number(d&&d.value); if(!isFinite(v)) return false; show(v); ls.set('ae-views',String(v)); if(act==='hit') ss.set('ae-viewed','1'); return true; };
-  // 方法一：JSONP（用 script 載入，不受跨網域限制，手機瀏覽器較穩定）
-  const viaJsonp=()=>new Promise((res,rej)=>{ const cb='__aeViews'+Date.now(); const sc=document.createElement('script'); let t;
-    const done=()=>{ clearTimeout(t); try{ delete window[cb]; }catch(e){ window[cb]=undefined; } sc.remove(); };
-    window[cb]=d=>{ done(); ok(d)?res():rej(); }; sc.onerror=()=>{ done(); rej(); }; t=setTimeout(()=>{ done(); rej(); },8000);
-    sc.src=url+(url.includes('?')?'&':'?')+'callback='+cb; document.head.appendChild(sc); });
-  // 方法二：一般請求（JSONP 被擋時備用）
-  const viaFetch=()=>{ const ctl=window.AbortController?new AbortController():null; const t=setTimeout(()=>ctl&&ctl.abort(),8000);
-    return fetch(url,{signal:ctl?ctl.signal:undefined,cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject()).then(d=>{ clearTimeout(t); if(!ok(d)) throw 0; }); };
-  viaJsonp().catch(()=>viaFetch()).catch(()=>{ if(!onSite && !cached) box.hidden=true; }); // 正式網站上連不到時保留數字或「—」
+  if(!/(^|\.)github\.io$/.test(location.hostname)){ box.hidden=true; return; } // 只在正式網站（GitHub）計數與顯示
+  const img=new Image(); img.alt='瀏覽次數'; img.className='views-badge'; img.decoding='async';
+  img.onload=()=>{ out.replaceWith(img); box.querySelector('.vl')?.remove(); box.hidden=false; };
+  img.onerror=()=>{ out.textContent='—'; box.hidden=false; };
+  img.src='https://hits.sh/capsuleuwu.github.io/AE-Expression-Guide.svg?style=flat-square&label=%E7%80%8F%E8%A6%BD%E6%AC%A1%E6%95%B8&color=2b2f36&labelColor=2b2f36';
 })();
 
 // 「在 After Effects 中套用」與電腦版「數值圖表」：展開時平滑捲到整個面板（電腦版捲右欄、手機版捲整頁；用瀏覽器原生平滑捲動較不會抖動）
