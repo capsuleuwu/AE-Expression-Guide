@@ -637,5 +637,8 @@ setPlaying(S.playing);
 Sync.init();
 load(location.hash.slice(1)||'time-rotate');
 requestAnimationFrame(frame);
-requestAnimationFrame(()=>document.documentElement.classList.remove('booting')); // 第一格畫好後再顯示
+{ // 第一格畫好、字型載入（最多等 0.8 秒）後再顯示，避免字型替換時標題閃動
+  const reveal=()=>document.documentElement.classList.remove('booting');
+  const fontsReady=document.fonts&&document.fonts.load?Promise.race([document.fonts.load('700 16px "Noto Sans TC"','AE 表達式圖鑑').then(()=>document.fonts.ready),new Promise(r=>setTimeout(r,800))]):Promise.resolve();
+  fontsReady.then(()=>requestAnimationFrame(reveal),()=>requestAnimationFrame(reveal)); }
 })();

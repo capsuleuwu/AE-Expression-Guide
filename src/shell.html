@@ -8,7 +8,7 @@
 <title>AE 表達式圖鑑</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&display=optional" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
   /* 單一深色主題：仿合成軟體的面板環境。藍色＝選取/互動，琥珀色＝表達式 */
@@ -24,7 +24,7 @@
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 html{background:#141518}
-html.booting .app{visibility:hidden} /* 內容與面板狀態準備好之前先不顯示，避免重新整理時閃一下 */
+html.booting .app,html.booting .top{visibility:hidden} /* 內容與面板狀態準備好之前先不顯示，避免重新整理時閃一下 */
 body{background:var(--bg);color:var(--ink);font:14px/1.6 var(--body);-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
