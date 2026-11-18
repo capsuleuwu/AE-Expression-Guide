@@ -527,7 +527,7 @@ $('#search').addEventListener('input',()=>{ renderSide(); $('#side').scrollTop=0
 let lockY=0;
 function setDrawer(open){
   const body=document.body; if(open===body.classList.contains('drawer')) return;
-  const mobile=matchMedia('(max-width:820px)').matches;
+  const mobile=matchMedia('(max-width:739px), (max-width:1100px) and (max-height:540px)').matches;
   if(open && document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName) && document.activeElement.id!=='search') document.activeElement.blur(); // 打開選單前先收起鍵盤，避免版面錯位
   if(open){ if(mobile){ lockY=window.scrollY; body.style.top=(-lockY)+'px'; body.classList.add('locked'); } body.classList.add('drawer'); }
   else { body.classList.remove('drawer'); if(body.classList.contains('locked')){ body.classList.remove('locked'); body.style.top=''; window.scrollTo(0,lockY); } }
@@ -551,7 +551,7 @@ $('#bCopy').onclick=async()=>{ const b=$('#bCopy'); let ok=false;
 $('#bReset').onclick=()=>{ if(S.saved){ go(S.saved.base); return; } setCode(defaultCode()); renderParams(true); };
 // 讓收藏命名列出現在畫面上（手機版鍵盤彈出後也維持在可見範圍）
 function showSaveInput(n){
-  const mobile=matchMedia('(max-width:820px)').matches;
+  const mobile=matchMedia('(max-width:739px), (max-width:1100px) and (max-height:540px)').matches;
   const place=()=>{
     if(!mobile){ n.closest('.savebar').scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
     const vv=window.visualViewport, vh=vv?vv.height:innerHeight, r=n.closest('.savebar').getBoundingClientRect();
