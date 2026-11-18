@@ -1443,7 +1443,7 @@ speed = 6; // @變化速度 0~20 0.5
 j = Math.abs(noise(time * speed)) * amt;
 value + [(index - 2) * j, 0]`,
   layer:{ shape:'text', fontSize:240, text:'GLITCH', blend:'add' },
-  dup:{ n:3, layout:'same', names:['紅','綠','藍'], colors:[[1,0,0],[0,1,0],[0,0.4,1]] } },
+  tlName:'三色圖層', dup:{ n:3, layout:'same', names:['紅','綠','藍'], colors:[[1,0,0],[0,1,0],[0,0.4,1]] } },
 
 // ---------------- 實驗室 ----------------
 { id:'lab', cat:'lab', name:'空白實驗室', sig:'選擇屬性 → 自由撰寫', prop:'position', lab:true,
